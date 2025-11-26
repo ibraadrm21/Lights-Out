@@ -1,0 +1,303 @@
+[
+    {
+        "id": 1,
+        "text": "¿Quién ganó el Gran Premio de Mónaco en 2019?",
+        "A": "Lewis Hamilton",
+        "B": "Max Verstappen",
+        "C": "Daniel Ricciardo",
+        "D": "Valtteri Bottas",
+        "correct": "A",
+        "difficulty": "medium",
+        "tags": [
+            "historia",
+            "monaco",
+            "2019"
+        ],
+        "source": "F1 official"
+    },
+    {
+        "id": 2,
+        "text": "¿Qué piloto tiene el récord de más victorias en una sola temporada (hasta 2023)?",
+        "A": "Michael Schumacher",
+        "B": "Sebastian Vettel",
+        "C": "Max Verstappen",
+        "D": "Lewis Hamilton",
+        "correct": "C",
+        "difficulty": "easy",
+        "tags": [
+            "records",
+            "wins"
+        ],
+        "source": "F1 stats"
+    },
+    {
+        "id": 3,
+        "text": "¿En qué año ganó Fernando Alonso su primer campeonato mundial?",
+        "A": "2004",
+        "B": "2005",
+        "C": "2006",
+        "D": "2007",
+        "correct": "B",
+        "difficulty": "medium",
+        "tags": [
+            "alonso",
+            "championship"
+        ],
+        "source": "F1 history"
+    },
+    {
+        "id": 4,
+        "text": "¿Qué equipo ha ganado más campeonatos de constructores en la historia?",
+        "A": "McLaren",
+        "B": "Williams",
+        "C": "Mercedes",
+        "D": "Ferrari",
+        "correct": "D",
+        "difficulty": "easy",
+        "tags": [
+            "teams",
+            "history"
+        ],
+        "source": "F1 stats"
+    },
+    {
+        "id": 5,
+        "text": "¿Quién es el piloto más joven en ganar un Gran Premio?",
+        "A": "Max Verstappen",
+        "B": "Sebastian Vettel",
+        "C": "Charles Leclerc",
+        "D": "Fernando Alonso",
+        "correct": "A",
+        "difficulty": "medium",
+        "tags": [
+            "records",
+            "age"
+        ],
+        "source": "F1 stats"
+    },
+    {
+        "id": 6,
+        "text": "¿Qué circuito es conocido como 'El Templo de la Velocidad'?",
+        "A": "Silverstone",
+        "B": "Spa-Francorchamps",
+        "C": "Monza",
+        "D": "Suzuka",
+        "correct": "C",
+        "difficulty": "easy",
+        "tags": [
+            "circuits",
+            "nicknames"
+        ],
+        "source": "F1 culture"
+    },
+    {
+        "id": 7,
+        "text": "¿En qué año debutó Lewis Hamilton en la F1?",
+        "A": "2006",
+        "B": "2007",
+        "C": "2008",
+        "D": "2009",
+        "correct": "B",
+        "difficulty": "medium",
+        "tags": [
+            "hamilton",
+            "debut"
+        ],
+        "source": "F1 history"
+    },
+    {
+        "id": 8,
+        "text": "¿Qué piloto es apodado 'The Iceman'?",
+        "A": "Mika Häkkinen",
+        "B": "Valtteri Bottas",
+        "C": "Kimi Räikkönen",
+        "D": "Nico Rosberg",
+        "correct": "C",
+        "difficulty": "easy",
+        "tags": [
+            "drivers",
+            "nicknames"
+        ],
+        "source": "F1 culture"
+    },
+    {
+        "id": 9,
+        "text": "¿Cuántos campeonatos ganó Ayrton Senna?",
+        "A": "2",
+        "B": "3",
+        "C": "4",
+        "D": "5",
+        "correct": "B",
+        "difficulty": "medium",
+        "tags": [
+            "senna",
+            "championships"
+        ],
+        "source": "F1 history"
+    },
+    {
+        "id": 10,
+        "text": "¿Qué equipo compró Red Bull Racing en 2004?",
+        "A": "Jaguar",
+        "B": "Stewart",
+        "C": "Minardi",
+        "D": "Jordan",
+        "correct": "A",
+        "difficulty": "hard",
+        "tags": [
+            "teams",
+            "business"
+        ],
+        "source": "F1 history"
+    },
+    {
+        "id": 11,
+        "text": "¿Quién fue el primer campeón mundial de F1 en 1950?",
+        "A": "Juan Manuel Fangio",
+        "B": "Alberto Ascari",
+        "C": "Giuseppe Farina",
+        "D": "Stirling Moss",
+        "correct": "C",
+        "difficulty": "hard",
+        "tags": [
+            "history",
+            "1950"
+        ],
+        "source": "F1 history"
+    },
+    {
+        "id": 12,
+        "text": "¿Qué bandera se muestra para indicar 'peligro, prohibido adelantar'?",
+        "A": "Roja",
+        "B": "Amarilla",
+        "C": "Azul",
+        "D": "Negra",
+        "correct": "B",
+        "difficulty": "easy",
+        "tags": [
+            "rules",
+            "flags"
+        ],
+        "source": "FIA regulations"
+    },
+    {
+        "id": 13,
+        "text": "¿Qué piloto ganó el campeonato de 2016 y se retiró inmediatamente?",
+        "A": "Jenson Button",
+        "B": "Felipe Massa",
+        "C": "Nico Rosberg",
+        "D": "Mark Webber",
+        "correct": "C",
+        "difficulty": "medium",
+        "tags": [
+            "rosberg",
+            "retirement"
+        ],
+        "source": "F1 history"
+    },
+    {
+        "id": 14,
+        "text": "¿Cuál es la longitud mínima de una carrera de F1 (excepto Mónaco)?",
+        "A": "250 km",
+        "B": "300 km",
+        "C": "305 km",
+        "D": "310 km",
+        "correct": "C",
+        "difficulty": "hard",
+        "tags": [
+            "rules",
+            "distance"
+        ],
+        "source": "FIA regulations"
+    },
+    {
+        "id": 15,
+        "text": "¿Qué piloto brasileño ganó el GP de Brasil en 2006 y 2008?",
+        "A": "Rubens Barrichello",
+        "B": "Felipe Massa",
+        "C": "Nelson Piquet Jr",
+        "D": "Bruno Senna",
+        "correct": "B",
+        "difficulty": "medium",
+        "tags": [
+            "brazil",
+            "massa"
+        ],
+        "source": "F1 history"
+    },
+    {
+        "id": 16,
+        "text": "¿Qué equipo tiene su base en Woking, Reino Unido?",
+        "A": "Williams",
+        "B": "Red Bull",
+        "C": "Mercedes",
+        "D": "McLaren",
+        "correct": "D",
+        "difficulty": "medium",
+        "tags": [
+            "teams",
+            "hq"
+        ],
+        "source": "F1 geography"
+    },
+    {
+        "id": 17,
+        "text": "¿Quién es el único piloto en ganar la 'Triple Corona' del automovilismo?",
+        "A": "Fernando Alonso",
+        "B": "Graham Hill",
+        "C": "Jim Clark",
+        "D": "Mario Andretti",
+        "correct": "B",
+        "difficulty": "hard",
+        "tags": [
+            "history",
+            "triple crown"
+        ],
+        "source": "Motorsport history"
+    },
+    {
+        "id": 18,
+        "text": "¿Qué piloto usa el número 44?",
+        "A": "Lando Norris",
+        "B": "George Russell",
+        "C": "Lewis Hamilton",
+        "D": "Charles Leclerc",
+        "correct": "C",
+        "difficulty": "easy",
+        "tags": [
+            "drivers",
+            "numbers"
+        ],
+        "source": "F1 stats"
+    },
+    {
+        "id": 19,
+        "text": "¿En qué ciudad se corre el GP de Azerbaiyán?",
+        "A": "Estambul",
+        "B": "Sochi",
+        "C": "Bakú",
+        "D": "Tbilisi",
+        "correct": "C",
+        "difficulty": "easy",
+        "tags": [
+            "circuits",
+            "geography"
+        ],
+        "source": "F1 calendar"
+    },
+    {
+        "id": 20,
+        "text": "¿Qué fabricante de motores propulsó a Red Bull en sus primeros 4 títulos?",
+        "A": "Honda",
+        "B": "Ferrari",
+        "C": "Renault",
+        "D": "Cosworth",
+        "correct": "C",
+        "difficulty": "medium",
+        "tags": [
+            "engines",
+            "red bull"
+        ],
+        "source": "F1 history"
+    }
+]

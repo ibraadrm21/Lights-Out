@@ -1,0 +1,10 @@
+Flask==3.0.0
+Flask-CORS==4.0.0
+python-dotenv==1.0.0
+PyJWT==2.8.0
+werkzeug==3.0.1
+pathlib==1.0.1
+requests==2.31.0on-dotenv==1.0.0
+# sqlite3 is part of the standard library
+flask-socketio==5.3.5
+eventlet==0.33.3
