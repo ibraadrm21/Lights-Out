@@ -1,0 +1,301 @@
+[
+    {
+        "id": 1,
+        "text": "Who won the 2019 Monaco Grand Prix?",
+        "A": "Lewis Hamilton",
+        "B": "Max Verstappen",
+        "C": "Daniel Ricciardo",
+        "D": "Valtteri Bottas",
+        "correct": "A",
+        "difficulty": "medium",
+        "tags": [
+            "history",
+            "circuit",
+            "driver"
+        ],
+        "source": "F1 official / race archives"
+    },
+    {
+        "id": 2,
+        "text": "Which team did Michael Schumacher drive for before joining Ferrari in 1996?",
+        "A": "Jordan",
+        "B": "Benetton",
+        "C": "Williams",
+        "D": "McLaren",
+        "correct": "B",
+        "difficulty": "easy",
+        "tags": [
+            "history",
+            "driver"
+        ],
+        "source": "F1 official"
+    },
+    {
+        "id": 3,
+        "text": "What does DRS stand for?",
+        "A": "Downforce Reduction System",
+        "B": "Drag Reduction System",
+        "C": "Driver Radio System",
+        "D": "Dynamic Rear Spoiler",
+        "correct": "B",
+        "difficulty": "easy",
+        "tags": [
+            "technical"
+        ],
+        "source": "F1 technical regulations"
+    },
+    {
+        "id": 4,
+        "text": "Which circuit is known as the 'Temple of Speed'?",
+        "A": "Silverstone",
+        "B": "Spa-Francorchamps",
+        "C": "Monza",
+        "D": "Suzuka",
+        "correct": "C",
+        "difficulty": "easy",
+        "tags": [
+            "circuit"
+        ],
+        "source": "F1 official"
+    },
+    {
+        "id": 5,
+        "text": "Who is the youngest ever F1 World Champion?",
+        "A": "Lewis Hamilton",
+        "B": "Max Verstappen",
+        "C": "Sebastian Vettel",
+        "D": "Fernando Alonso",
+        "correct": "C",
+        "difficulty": "medium",
+        "tags": [
+            "records",
+            "driver"
+        ],
+        "source": "F1 records"
+    },
+    {
+        "id": 6,
+        "text": "In which year did the hybrid turbo era begin?",
+        "A": "2012",
+        "B": "2013",
+        "C": "2014",
+        "D": "2015",
+        "correct": "C",
+        "difficulty": "medium",
+        "tags": [
+            "history",
+            "technical"
+        ],
+        "source": "F1 history"
+    },
+    {
+        "id": 7,
+        "text": "Which driver has the most Grand Prix starts?",
+        "A": "Kimi Räikkönen",
+        "B": "Fernando Alonso",
+        "C": "Rubens Barrichello",
+        "D": "Lewis Hamilton",
+        "correct": "B",
+        "difficulty": "medium",
+        "tags": [
+            "records",
+            "driver"
+        ],
+        "source": "F1 stats 2024"
+    },
+    {
+        "id": 8,
+        "text": "What color flag indicates a slippery track surface?",
+        "A": "Yellow with red stripes",
+        "B": "White",
+        "C": "Blue",
+        "D": "Black and white",
+        "correct": "A",
+        "difficulty": "hard",
+        "tags": [
+            "regulations",
+            "flags"
+        ],
+        "source": "FIA regulations"
+    },
+    {
+        "id": 9,
+        "text": "Which team won the first ever Constructors' Championship in 1958?",
+        "A": "Ferrari",
+        "B": "Vanwall",
+        "C": "Cooper",
+        "D": "Lotus",
+        "correct": "B",
+        "difficulty": "hard",
+        "tags": [
+            "history",
+            "team"
+        ],
+        "source": "F1 history"
+    },
+    {
+        "id": 10,
+        "text": "How many points are awarded for 1st place in a Grand Prix?",
+        "A": "20",
+        "B": "25",
+        "C": "10",
+        "D": "15",
+        "correct": "B",
+        "difficulty": "easy",
+        "tags": [
+            "regulations",
+            "points"
+        ],
+        "source": "F1 regulations"
+    },
+    {
+        "id": 11,
+        "text": "Which driver is nicknamed 'The Honey Badger'?",
+        "A": "Valtteri Bottas",
+        "B": "Daniel Ricciardo",
+        "C": "Lando Norris",
+        "D": "George Russell",
+        "correct": "B",
+        "difficulty": "easy",
+        "tags": [
+            "driver",
+            "nickname"
+        ],
+        "source": "F1 culture"
+    },
+    {
+        "id": 12,
+        "text": "What is the minimum weight of an F1 car (2023 regulations, approx)?",
+        "A": "700 kg",
+        "B": "798 kg",
+        "C": "750 kg",
+        "D": "850 kg",
+        "correct": "B",
+        "difficulty": "hard",
+        "tags": [
+            "technical",
+            "regulations"
+        ],
+        "source": "FIA technical regulations"
+    },
+    {
+        "id": 13,
+        "text": "Which circuit features the 'Eau Rouge' corner?",
+        "A": "Paul Ricard",
+        "B": "Spa-Francorchamps",
+        "C": "Zandvoort",
+        "D": "Nürburgring",
+        "correct": "B",
+        "difficulty": "easy",
+        "tags": [
+            "circuit",
+            "corners"
+        ],
+        "source": "F1 circuits"
+    },
+    {
+        "id": 14,
+        "text": "Who was the first British F1 World Champion?",
+        "A": "Jackie Stewart",
+        "B": "Jim Clark",
+        "C": "Mike Hawthorn",
+        "D": "Graham Hill",
+        "correct": "C",
+        "difficulty": "hard",
+        "tags": [
+            "history",
+            "driver"
+        ],
+        "source": "F1 history"
+    },
+    {
+        "id": 15,
+        "text": "Which team is based in Woking, UK?",
+        "A": "Williams",
+        "B": "McLaren",
+        "C": "Aston Martin",
+        "D": "Mercedes",
+        "correct": "B",
+        "difficulty": "medium",
+        "tags": [
+            "team",
+            "geography"
+        ],
+        "source": "F1 teams"
+    },
+    {
+        "id": 16,
+        "text": "What is the name of the Ferrari F1 team's passionate fan base?",
+        "A": "The Red Army",
+        "B": "Tifosi",
+        "C": "Prancing Horse Power",
+        "D": "Scuderia Fans",
+        "correct": "B",
+        "difficulty": "easy",
+        "tags": [
+            "culture",
+            "team"
+        ],
+        "source": "F1 culture"
+    },
+    {
+        "id": 17,
+        "text": "Who holds the record for the most pole positions in F1 history?",
+        "A": "Michael Schumacher",
+        "B": "Ayrton Senna",
+        "C": "Lewis Hamilton",
+        "D": "Sebastian Vettel",
+        "correct": "C",
+        "difficulty": "medium",
+        "tags": [
+            "records",
+            "driver"
+        ],
+        "source": "F1 stats"
+    },
+    {
+        "id": 18,
+        "text": "Which tyre compound is marked with a red stripe?",
+        "A": "Hard",
+        "B": "Medium",
+        "C": "Soft",
+        "D": "Intermediate",
+        "correct": "C",
+        "difficulty": "medium",
+        "tags": [
+            "technical",
+            "tyres"
+        ],
+        "source": "Pirelli"
+    },
+    {
+        "id": 19,
+        "text": "In which country is the Interlagos circuit located?",
+        "A": "Spain",
+        "B": "Portugal",
+        "C": "Brazil",
+        "D": "Argentina",
+        "correct": "C",
+        "difficulty": "easy",
+        "tags": [
+            "circuit",
+            "geography"
+        ],
+        "source": "F1 calendar"
+    },
+    {
+        "id": 20,
+        "text": "Who is the only driver to win the Triple Crown of Motorsport?",
+        "A": "Fernando Alonso",
+        "B": "Graham Hill",
+        "C": "Mario Andretti",
+        "D": "Jim Clark",
+        "correct": "B",
+        "difficulty": "hard",
+        "tags": [
+            "history",
+            "records"
+        ],
+        "source": "Motorsport history"
+    }
+]
