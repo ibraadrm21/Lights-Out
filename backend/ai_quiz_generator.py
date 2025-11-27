@@ -9,7 +9,7 @@ import requests
 from typing import Dict, List, Optional
 
 # Hugging Face API Configuration
-HF_API_TOKEN = os.environ.get("HUGGINGFACE_API_TOKEN", "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")
+HF_API_TOKEN = os.environ.get("HUGGINGFACE_API_TOKEN")
 API_URL = "https://router.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
 
 # Rank thresholds (score-based progression)
