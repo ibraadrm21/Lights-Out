@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    coins INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -15,6 +16,16 @@ CREATE TABLE IF NOT EXISTS points (
     score INTEGER NOT NULL,
     mode VARCHAR(50) DEFAULT 'quiz',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Quiz Results table (for tracking quiz completions and rewards)
+CREATE TABLE IF NOT EXISTS quiz_results (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    score_percentage INTEGER NOT NULL,
+    points_awarded INTEGER NOT NULL,
+    coins_awarded INTEGER NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Questions table

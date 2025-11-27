@@ -1,293 +1,158 @@
 import { React, html } from "/src/utils/htm.js";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import api from "/src/utils/api.js";
 import { motion } from "https://esm.sh/framer-motion@10.16.4?external=react,react-dom";
 
-// Rank badge component
-function RankBadge({ rank }) {
-    const rankColors = {
-        bronze: "from-amber-700 to-amber-900",
-        silver: "from-gray-300 to-gray-500",
-        gold: "from-yellow-400 to-yellow-600",
-        platinum: "from-cyan-400 to-cyan-600",
-        diamond: "from-blue-400 to-purple-600"
-    };
-
-    const rankIcons = {
-        bronze: "🥉",
-        silver: "🥈",
-        gold: "🥇",
-        platinum: "💎",
-        diamond: "👑"
-    };
-
-    return html`
-    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${rankColors[rank]} text-white font-bold text-sm shadow-lg">
-      <span>${rankIcons[rank]}</span>
-      <span className="uppercase">${rank}</span>
-    </div>
-  `;
-}
-
-// Difficulty indicator component
-function DifficultyIndicator({ difficulty }) {
-    const colors = {
-        easy: "bg-green-500",
-        medium: "bg-yellow-500",
-        hard: "bg-red-500"
-    };
-
-    return html`
-    <div className="flex items-center gap-2">
-      <div className="w-2 h-2 rounded-full ${colors[difficulty]}"></div>
-      <span className="text-sm text-gray-400 capitalize">${difficulty}</span>
-    </div>
-  `;
-}
-
 export default function AdaptiveQuiz() {
-    const [playerState, setPlayerState] = useState({
-        score: 0,
-        rank: "bronze",
-        previous_difficulty: "easy",
-        accuracy_last_5: 50,
-        category: "F1",
-        pace: "normal"
-    });
+  const [questions, setQuestions] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [score, setScore] = useState(0);
+  const [started, setStarted] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [rewards, setRewards] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-    const [currentQuestion, setCurrentQuestion] = useState(null);
-    const [loading, setLoading] = useState(false);
-    const [started, setStarted] = useState(false);
-    const [answerHistory, setAnswerHistory] = useState([]);
-    const [questionStartTime, setQuestionStartTime] = useState(null);
-    const [showExplanation, setShowExplanation] = useState(false);
-    const [lastAnswer, setLastAnswer] = useState(null);
-    const [questionsAnswered, setQuestionsAnswered] = useState(0);
+  const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("user_id");
 
-    const token = localStorage.getItem("token");
-    const userId = localStorage.getItem("user_id");
-
-    // Calculate accuracy from last 5 answers
-    function calculateAccuracy() {
-        if (answerHistory.length === 0) return 50;
-        const recent = answerHistory.slice(-5);
-        const correct = recent.filter(a => a.correct).length;
-        return (correct / recent.length) * 100;
+  async function startQuiz() {
+    setLoading(true);
+    try {
+      const res = await api.get("/api/quiz/start?count=10");
+      setQuestions(res.questions);
+      setCurrentIndex(0);
+      setScore(0);
+      setStarted(true);
+      setFinished(false);
+      setRewards(null);
+    } catch (error) {
+      console.error("Failed to load questions:", error);
+      alert("Failed to load quiz questions");
+    } finally {
+      setLoading(false);
     }
+  }
 
-    // Calculate answer pace
-    function calculatePace(timeSeconds) {
-        if (timeSeconds < 5) return "fast";
-        if (timeSeconds > 15) return "slow";
-        return "normal";
+  function handleAnswer(selectedIndex) {
+    if (showExplanation) return;
+
+    const currentQ = questions[currentIndex];
+    const isCorrect = selectedIndex === (currentQ.debug_correct.charCodeAt(0) - 65); // A=0, B=1, C=2, D=3
+
+    setSelectedAnswer(selectedIndex);
+    setShowExplanation(true);
+
+    if (isCorrect) {
+      setScore(score + 10);
     }
+  }
 
-    // Fetch next adaptive question
-    async function fetchNextQuestion() {
-        setLoading(true);
-        setShowExplanation(false);
-        setLastAnswer(null);
-
-        try {
-            const response = await api.post("/api/quiz/adaptive", playerState);
-            setCurrentQuestion(response);
-            setQuestionStartTime(Date.now());
-        } catch (error) {
-            console.error("Failed to fetch question:", error);
-            alert("AI generation failed, using fallback questions");
-        } finally {
-            setLoading(false);
-        }
+  function nextQuestion() {
+    if (currentIndex + 1 < questions.length) {
+      setCurrentIndex(currentIndex + 1);
+      setShowExplanation(false);
+      setSelectedAnswer(null);
+    } else {
+      finishQuiz();
     }
+  }
 
-    // Start the adaptive quiz
-    function startQuiz() {
-        setStarted(true);
-        setPlayerState({
-            score: 0,
-            rank: "bronze",
-            previous_difficulty: "easy",
-            accuracy_last_5: 50,
-            category: "F1",
-            pace: "normal"
-        });
-        setAnswerHistory([]);
-        setQuestionsAnswered(0);
-        fetchNextQuestion();
+  async function finishQuiz() {
+    setFinished(true);
+
+    if (token && userId) {
+      const maxScore = questions.length * 10;
+      const percentage = Math.round((score / maxScore) * 100);
+
+      try {
+        const data = await api.post("/api/quiz/result", { score_percentage: percentage });
+        setRewards(data);
+      } catch (err) {
+        console.error("Failed to submit results", err);
+      }
     }
+  }
 
-    // Handle answer selection
-    function handleAnswer(selectedIndex) {
-        if (!currentQuestion || showExplanation) return;
+  const currentQuestion = questions[currentIndex];
+  const correctIndex = currentQuestion ? (currentQuestion.debug_correct.charCodeAt(0) - 65) : -1;
 
-        const answerTime = Math.floor((Date.now() - questionStartTime) / 1000);
-        const isCorrect = selectedIndex === currentQuestion.correct_answer_index;
-
-        // Update answer history
-        const newAnswer = {
-            correct: isCorrect,
-            time: answerTime,
-            difficulty: currentQuestion.difficulty
-        };
-        setAnswerHistory([...answerHistory, newAnswer]);
-        setLastAnswer({ ...newAnswer, selectedIndex });
-
-        // Update player state
-        const newScore = playerState.score + (isCorrect ? 10 : 0);
-        const newAccuracy = calculateAccuracy();
-        const newPace = calculatePace(answerTime);
-
-        setPlayerState({
-            ...playerState,
-            score: newScore,
-            previous_difficulty: currentQuestion.difficulty,
-            accuracy_last_5: newAccuracy,
-            pace: newPace
-        });
-
-        setQuestionsAnswered(questionsAnswered + 1);
-        setShowExplanation(true);
-
-        // Save points if logged in
-        if (token && userId && isCorrect) {
-            const pointsUrl = "/api/points/" + userId;
-            api.post(pointsUrl, { score: 10, mode: "adaptive" }, token);
-        }
-    }
-
-    // Continue to next question
-    function nextQuestion() {
-        // Check for rank adjustment
-        if (currentQuestion.rank_adjustment === "increase") {
-            const ranks = ["bronze", "silver", "gold", "platinum", "diamond"];
-            const currentIndex = ranks.indexOf(playerState.rank);
-            if (currentIndex < ranks.length - 1) {
-                setPlayerState({ ...playerState, rank: ranks[currentIndex + 1] });
-            }
-        }
-
-        fetchNextQuestion();
-    }
-
-    const startedContent = started && html`<${RankBadge} rank=${playerState.rank} />`;
-
-    return html`
+  return html`
     <div className="max-w-3xl mx-auto mt-10 px-4">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-bold text-warmRed">Adaptive AI Quiz</h2>
-        ${startedContent}
+        <h2 className="text-3xl font-bold text-warmRed">F1 Quiz</h2>
       </div>
       
       ${!started && html`
         <div className="bg-[#1f1f27] p-8 rounded-lg border border-gray-800">
-          <h3 className="text-2xl font-bold mb-4">🤖 AI-Powered Adaptive Challenge</h3>
+          <h3 className="text-2xl font-bold mb-4">🏎️ Test Your F1 Knowledge</h3>
           <p className="text-gray-300 mb-6">
-            Experience an intelligent quiz that adapts to your skill level in real-time. 
-            Questions get harder as you improve, and easier if you struggle.
+            Answer 10 questions about Formula 1 and earn points and coins!
           </p>
-          
-          <div className="space-y-4 mb-8">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📊</span>
-              <div>
-                <div className="font-semibold">Adaptive Difficulty</div>
-                <div className="text-sm text-gray-400">Questions adjust based on your performance</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🏆</span>
-              <div>
-                <div className="font-semibold">Rank Progression</div>
-                <div className="text-sm text-gray-400">Bronze → Silver → Gold → Platinum → Diamond</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">⚡</span>
-              <div>
-                <div className="font-semibold">Performance Tracking</div>
-                <div className="text-sm text-gray-400">Monitors accuracy, pace, and difficulty trends</div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <label className="block mb-2 text-lg text-gray-300">Category:</label>
-            <select 
-              value=${playerState.category} 
-              onChange=${e => setPlayerState({ ...playerState, category: e.target.value })}
-              className="w-full bg-[#262633] p-3 rounded border border-gray-700 focus:border-warmRed outline-none text-white"
-            >
-              <option value="F1">Formula 1</option>
-              <option value="general">General Knowledge</option>
-            </select>
-          </div>
           
           <button 
             onClick=${startQuiz} 
-            className="w-full bg-[#FF1E00] hover:bg-red-600 text-white font-bold py-4 px-6 rounded transition-colors text-lg shadow-lg shadow-red-900/20"
+            disabled=${loading}
+            className="w-full bg-[#FF1E00] hover:bg-red-600 text-white font-bold py-4 px-6 rounded transition-colors text-lg shadow-lg shadow-red-900/20 disabled:opacity-50"
           >
-            START ADAPTIVE CHALLENGE 🚀
+            ${loading ? "Loading..." : "START QUIZ 🚀"}
           </button>
         </div>
       `}
       
-      ${started && !loading && currentQuestion && html`
+      ${started && !finished && currentQuestion && html`
         <div className="space-y-6">
           <div className="bg-[#1f1f27] p-4 rounded-lg border border-gray-800 flex items-center justify-between">
             <div>
+              <div className="text-sm text-gray-400">Question</div>
+              <div className="text-2xl font-bold text-warmRed">${currentIndex + 1} / ${questions.length}</div>
+            </div>
+            <div>
               <div className="text-sm text-gray-400">Score</div>
-              <div className="text-2xl font-bold text-warmRed">${playerState.score}</div>
+              <div className="text-2xl font-bold">${score}</div>
             </div>
-            <div>
-              <div className="text-sm text-gray-400">Questions</div>
-              <div className="text-2xl font-bold">${questionsAnswered}</div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-400">Accuracy</div>
-              <div className="text-2xl font-bold text-green-400">${Math.round(playerState.accuracy_last_5)}%</div>
-            </div>
-            <${DifficultyIndicator} difficulty=${currentQuestion.difficulty} />
           </div>
           
           <${motion.div}
-            key=${questionsAnswered}
+            key=${currentIndex}
             initial=${{ opacity: 0, y: 20 }}
             animate=${{ opacity: 1, y: 0 }}
             className="bg-[#1f1f27] p-6 rounded-lg border border-gray-800 shadow-xl"
           >
-            <div className="mb-6 text-xl font-medium">${currentQuestion.question}</div>
+            <div className="mb-6 text-xl font-medium">${currentQuestion.text}</div>
             
             <div className="grid grid-cols-1 gap-3">
-              ${currentQuestion.options.map((option, index) => {
-        let buttonClass = "p-4 bg-[#262633] rounded border transition-all text-left";
+              ${["A", "B", "C", "D"].map((letter, index) => {
+    let buttonClass = "p-4 bg-[#262633] rounded border transition-all text-left";
 
-        if (showExplanation) {
-            if (index === currentQuestion.correct_answer_index) {
-                buttonClass += " border-green-500 bg-green-900/20";
-            } else if (lastAnswer && index === lastAnswer.selectedIndex && !lastAnswer.correct) {
-                buttonClass += " border-red-500 bg-red-900/20";
-            } else {
-                buttonClass += " border-gray-700 opacity-50";
-            }
-        } else {
-            buttonClass += " hover:bg-[#2b2b39] hover:border-warmRed border-transparent cursor-pointer";
-        }
+    if (showExplanation) {
+      if (index === correctIndex) {
+        buttonClass += " border-green-500 bg-green-900/20";
+      } else if (selectedAnswer === index && index !== correctIndex) {
+        buttonClass += " border-red-500 bg-red-900/20";
+      } else {
+        buttonClass += " border-gray-700 opacity-50";
+      }
+    } else {
+      buttonClass += " hover:bg-[#2b2b39] hover:border-warmRed border-transparent cursor-pointer";
+    }
 
-        const correctIcon = showExplanation && index === currentQuestion.correct_answer_index ? html`<span className="ml-2 text-green-400">✓</span>` : null;
+    const correctIcon = showExplanation && index === correctIndex ? html`<span className="ml-2 text-green-400">✓</span>` : null;
 
-        return html`
+    return html`
                   <button 
                     key=${index}
                     onClick=${() => handleAnswer(index)}
                     disabled=${showExplanation}
                     className=${buttonClass}
                   >
-                    <span className="font-bold text-warmRed mr-2">${String.fromCharCode(65 + index)}.</span>
-                    ${option}
+                    <span className="font-bold text-warmRed mr-2">${letter}.</span>
+                    ${currentQuestion[letter]}
                     ${correctIcon}
                   </button>
                 `;
-    })}
+  })}
             </div>
             
             ${showExplanation && html`
@@ -296,24 +161,18 @@ export default function AdaptiveQuiz() {
                 animate=${{ opacity: 1, height: "auto" }}
                 className="mt-6 p-4 bg-[#262633] rounded border border-gray-700"
               >
-                <div className="text-sm text-gray-400 mb-2">Explanation:</div>
-                <div className="text-gray-200">${currentQuestion.explanation}</div>
-                
-                ${lastAnswer && html`
-                  <div className="mt-4 text-sm">
-                    ${lastAnswer.correct
-                        ? html`<span className="text-green-400">✓ Correct! +10 points</span>`
-                        : html`<span className="text-red-400">✗ Incorrect</span>`
-                    }
-                    <span className="text-gray-500 ml-3">Answered in ${lastAnswer.time}s</span>
-                  </div>
-                `}
+                <div className="mb-4 text-sm">
+                  ${selectedAnswer === correctIndex
+          ? html`<span className="text-green-400 text-lg">✓ Correct! +10 points</span>`
+          : html`<span className="text-red-400 text-lg">✗ Incorrect</span>`
+        }
+                </div>
                 
                 <button
                   onClick=${nextQuestion}
-                  className="mt-4 w-full bg-warmRed hover:bg-red-600 text-white font-bold py-3 px-6 rounded transition-colors"
+                  className="w-full bg-warmRed hover:bg-red-600 text-white font-bold py-3 px-6 rounded transition-colors"
                 >
-                  Next Question →
+                  ${currentIndex + 1 < questions.length ? "Next Question →" : "Finish Quiz"}
                 </button>
               </${motion.div}>
             `}
@@ -321,11 +180,46 @@ export default function AdaptiveQuiz() {
         </div>
       `}
       
-      ${loading && html`
-        <div className="bg-[#1f1f27] p-12 rounded-lg border border-gray-800 text-center">
-          <div className="text-2xl mb-4">🤖</div>
-          <div className="text-gray-400">Generating adaptive question...</div>
-        </div>
+      ${finished && html`
+        <${motion.div} 
+          initial=${{ scale: 0.9, opacity: 0 }}
+          animate=${{ scale: 1, opacity: 1 }}
+          className="mt-8 p-8 bg-[#1f1f27] rounded-lg text-center border border-warmRed"
+        >
+          <h3 className="text-2xl font-bold mb-2">Quiz Complete! 🏁</h3>
+          <div className="text-4xl font-bold text-warmRed mb-4">${score} / ${questions.length * 10}</div>
+          
+          ${rewards && html`
+            <div className="mb-6 p-4 bg-[#2A2A3C] rounded-lg border border-yellow-500/30">
+              <div className="text-lg text-gray-300 mb-3">Rewards Earned</div>
+              <div className="flex justify-center gap-8">
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl mb-1">⭐</span>
+                  <span className="font-bold text-yellow-400 text-xl">+${rewards.points_awarded}</span>
+                  <span className="text-xs text-gray-500">Points</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-3xl mb-1">🪙</span>
+                  <span className="font-bold text-yellow-600 text-xl">+${rewards.coins_awarded}</span>
+                  <span className="text-xs text-gray-500">Coins</span>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t border-gray-700 text-sm text-gray-400">
+                Total: ${rewards.total_points} ⭐ | ${rewards.total_coins} 🪙
+              </div>
+            </div>
+          `}
+          
+          ${!token && html`
+            <div className="mb-4 p-3 bg-yellow-900/20 border border-yellow-700 rounded text-sm">
+              <a href="/login" className="text-yellow-400 hover:underline">Login</a> to save your progress and earn rewards!
+            </div>
+          `}
+          
+          <button onClick=${() => { setStarted(false); setFinished(false); setRewards(null); }} className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded">
+            Play Again
+          </button>
+        </${motion.div}>
       `}
     </div>
   `;

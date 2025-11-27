@@ -10,7 +10,7 @@ from typing import Dict, List, Optional
 
 # Hugging Face API Configuration
 HF_API_TOKEN = os.environ.get("HUGGINGFACE_API_TOKEN")
-API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+API_URL = "https://router.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
 
 # Rank thresholds (score-based progression)
 RANK_THRESHOLDS = {
@@ -108,7 +108,7 @@ def determine_rank_adjustment(player_state: Dict, difficulty: str) -> str:
     
     return "none"
 
-def generate_adaptive_question(player_state: Dict) -> Optional[Dict]:
+def generate_adaptive_question(player_state: Dict, seen_questions: List[str] = None) -> Optional[Dict]:
     """
     Generate an adaptive quiz question using AI based on player state.
     
@@ -120,6 +120,7 @@ def generate_adaptive_question(player_state: Dict) -> Optional[Dict]:
             - accuracy_last_5: float (0-100)
             - category: str (F1, general, etc.)
             - pace: str (fast/slow/normal)
+        seen_questions: List of strings (question texts) to avoid repeating.
     
     Returns:
         Dict with question, options, correct_answer_index, difficulty, rank_adjustment, explanation
@@ -146,10 +147,19 @@ def generate_adaptive_question(player_state: Dict) -> Optional[Dict]:
     else:
         category_context = "general knowledge across various topics"
     
+    # Construct negative constraints for seen questions
+    seen_constraint = ""
+    if seen_questions and len(seen_questions) > 0:
+        # Take only the last 20 to avoid token limit issues
+        recent_seen = seen_questions[-20:]
+        seen_list = '", "'.join(recent_seen)
+        seen_constraint = f'\nDO NOT generate any of the following questions: "{seen_list}"'
+
     prompt = f"""<s>[INST] You are an expert quiz question generator.
 Generate ONE multiple-choice question about {category_context}.
 Difficulty level: {difficulty}
 {difficulty_instructions[difficulty]}
+{seen_constraint}
 
 Format your response as ONLY a valid JSON object (no extra text):
 {{
@@ -164,6 +174,7 @@ Requirements:
 - Only one correct answer
 - Globally understandable (no obscure regional facts)
 - Explanation should be 1-2 sentences
+- The question MUST be different from any in the "DO NOT generate" list.
 [/INST]"""
 
     headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
@@ -232,8 +243,8 @@ def generate_fallback_question(difficulty: str, category: str, rank_adjustment: 
             q = questions[0]
             return {
                 "question": q["text"],
-                "options": [q["option_a"], q["option_b"], q["option_c"], q["option_d"]],
-                "correct_answer_index": ord(q["correct"]) - ord('A'),  # Convert A/B/C/D to 0/1/2/3
+                "options": [q["A"], q["B"], q["C"], q["D"]],
+                "correct_answer_index": ord(q["debug_correct"]) - ord('A'),  # Convert A/B/C/D to 0/1/2/3
                 "difficulty": difficulty,
                 "rank_adjustment": rank_adjustment,
                 "explanation": f"This is a {difficulty} level question about {category}."
