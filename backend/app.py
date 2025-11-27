@@ -142,17 +142,35 @@ def translate():
     return jsonify({"translations": translations})
 
 if __name__ == "__main__":
-    # Opcional: seed inicial
-    from quiz_seed import seed_questions
-    from geo_seed import seed_geo_examples
-    # Check if tables exist before seeding to avoid errors if init_db not called?
-    # init_db() is called above.
-    # We might want to check if data exists to avoid duplicate seeding if we run multiple times,
-    # but the seed scripts just insert.
-    # For v0.1 we can just run it.
+    # Ensure database is initialized and seeded
     try:
-        seed_questions()
-        seed_geo_examples()
+        from quiz_seed import seed_questions
+        from geo_seed import seed_geo_examples
+        
+        # Check if data exists before seeding
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        # Check questions
+        cur.execute("SELECT COUNT(*) as count FROM questions")
+        q_count = cur.fetchone()["count"]
+        if q_count == 0:
+            print("Seeding quiz questions...")
+            seed_questions()
+        else:
+            print(f"Quiz already has {q_count} questions")
+        
+        # Check geo locations
+        cur.execute("SELECT COUNT(*) as count FROM geo_locations")
+        g_count = cur.fetchone()["count"]
+        if g_count == 0:
+            print("Seeding geo locations...")
+            seed_geo_examples()
+        else:
+            print(f"Geo already has {g_count} locations")
+        
+        conn.close()
     except Exception as e:
-        print(f"Seed error (ignorable if already seeded): {e}")
+        print(f"Seed error: {e}")
+    
     app.run(host="0.0.0.0", port=5000, debug=True)

@@ -1,30 +1,29 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lights Out - F1 Platform</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lights Out - F1 Gaming Platform</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS CDN with custom config -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            carbon: '#15151E',
             warmRed: '#FF1E00',
-          },
-        },
-      },
+            darkBg: '#0f0f14',
+            cardBg: '#1f1f27',
+          }
+        }
+      }
     }
   </script>
 
-  <!-- Global CSS -->
-  <link rel="stylesheet" href="/src/index.css">
-
-  <!-- Import Map -->
+  <!-- Import Map for ES modules -->
   <script type="importmap">
     {
       "imports": {
@@ -34,12 +33,41 @@
       }
     }
   </script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #0f0f14;
+      color: white;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #1f1f27;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #FF1E00;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #cc1800;
+    }
+  </style>
 </head>
 
-<body class="bg-[#15151E] text-white">
+<body>
   <div id="root"></div>
-
-  <!-- Main Entry Point -->
   <script type="module" src="/src/main.js"></script>
 </body>
 
