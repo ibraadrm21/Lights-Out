@@ -1,67 +1,40 @@
-# database.py - inicialización de SQLite y helpers
-import sqlite3
-from pathlib import Path
-
-DB_PATH = Path(__file__).resolve().parent / "lights_out.db"
+# PostgreSQL Database Connection for Vercel
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from urllib.parse import urlparse
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
+    """Get PostgreSQL connection from Vercel Postgres or local"""
+    database_url = os.environ.get('POSTGRES_URL') or os.environ.get('DATABASE_URL')
+    
+    if not database_url:
+        raise Exception("No database URL found. Set POSTGRES_URL environment variable.")
+    
+    # Parse the URL
+    result = urlparse(database_url)
+    
+    conn = psycopg2.connect(
+        database=result.path[1:],
+        user=result.username,
+        password=result.password,
+        host=result.hostname,
+        port=result.port,
+        cursor_factory=RealDictCursor
+    )
     return conn
 
 def init_db():
+    """Initialize database with schema"""
     conn = get_connection()
     cur = conn.cursor()
-
-    # Users
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # Points / Stats
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS points (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        score INTEGER,
-        mode TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-    """)
-
-    # Questions (seeded)
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS questions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        text TEXT,
-        option_a TEXT,
-        option_b TEXT,
-        option_c TEXT,
-        option_d TEXT,
-        correct CHAR(1),
-        difficulty TEXT,
-        tags TEXT,
-        source TEXT,
-        last_verified_at DATETIME
-    )
-    """)
-
-    # Geo locations for Mapillary (seed)
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS geo_locations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        lat REAL,
-        lon REAL,
-        description TEXT,
-        mapillary_image_id TEXT
-    )
-    """)
-
+    
+    # Read and execute schema
+    schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
+    with open(schema_path, 'r') as f:
+        schema = f.read()
+    
+    cur.execute(schema)
     conn.commit()
     conn.close()
+    print("✅ Database initialized")

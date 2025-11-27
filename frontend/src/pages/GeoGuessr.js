@@ -18,7 +18,12 @@ export default function GeoGuessr() {
       setGeo(data);
     } catch (err) {
       console.error("Failed to load geo:", err);
-      setError("Failed to load location. Make sure the backend is running on localhost:5000");
+      const isVercel = window.location.hostname.includes('vercel.app');
+      if (isVercel) {
+        setError("⚠️ GeoGuessr requires a backend server. This feature only works on localhost:5000");
+      } else {
+        setError("Failed to load location. Make sure the backend is running on localhost:5000");
+      }
     } finally {
       setLoading(false);
     }
