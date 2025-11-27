@@ -1,5 +1,5 @@
 import { React, html } from "/src/utils/htm.js";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "/src/utils/api.js";
 import { useNavigate } from "https://esm.sh/react-router-dom@6.16.0?external=react,react-dom";
 import AnimatedButton from "/src/components/AnimatedButton.js";
@@ -9,6 +9,14 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/");
+    }
+  }, [navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();

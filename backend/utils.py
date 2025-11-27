@@ -12,10 +12,11 @@ def hash_password(password):
 def verify_password(hash_, password):
     return check_password_hash(hash_, password)
 
-def create_jwt(payload, expires_minutes=60*24*7):
-    exp = datetime.utcnow() + timedelta(minutes=expires_minutes)
-    payload.update({"exp": exp})
-    token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+def create_jwt(payload):
+    # Token expires in 365 days (effectively permanent until logout)
+    exp = datetime.utcnow() + timedelta(days=365)
+    payload_copy = {**payload, "exp": exp}
+    token = jwt.encode(payload_copy, JWT_SECRET, algorithm="HS256")
     return token
 
 def decode_jwt(token):

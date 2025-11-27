@@ -1,9 +1,9 @@
-# app.py - Flask app que sirve frontend y expone API
+# app.py - Flask app serving frontend and API
 import os
 from flask import Flask, send_from_directory, jsonify, request
 from flask_cors import CORS
 from database import init_db, get_connection
-from models import create_user, get_user_by_username, save_points, get_leaderboard, get_random_questions
+from models import create_user, get_user_by_username, save_points, get_leaderboard, get_random_questions, record_quiz_result, get_user_stats
 from utils import hash_password, verify_password, create_jwt, decode_jwt
 from dotenv import load_dotenv
 from pathlib import Path
@@ -19,7 +19,7 @@ app = Flask(__name__, static_folder=str(FRONTEND_DIST), static_url_path="/")
 app.config["SECRET_KEY"] = SECRET_KEY
 CORS(app)
 
-# Inicializar DB
+# Initialize DB
 init_db()
 
 # Serve index.html
@@ -58,6 +58,24 @@ def login():
     token = create_jwt({"user_id": user["id"], "username": username})
     return jsonify({"token": token, "user_id": user["id"]})
 
+# User profile endpoint
+@app.route("/api/user/<int:user_id>", methods=["GET"])
+def get_user_profile(user_id):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, username, coins FROM users WHERE id = ?", (user_id,))
+    user = cur.fetchone()
+    conn.close()
+    
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    
+    return jsonify({
+        "id": user["id"],
+        "username": user["username"],
+        "coins": user["coins"] or 0
+    })
+
 # Points endpoints
 @app.route("/api/points/<int:user_id>", methods=["GET"])
 def get_points(user_id):
@@ -80,33 +98,48 @@ def post_points(user_id):
     save_points(user_id, score, mode)
     return jsonify({"ok":True})
 
+# Quiz result endpoint
+@app.route("/api/quiz/result", methods=["POST"])
+def submit_quiz_result():
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    payload = decode_jwt(token)
+    if not payload:
+        return jsonify({"error":"unauthorized"}), 401
+    
+    user_id = payload["user_id"]
+    data = request.get_json()
+    score_percentage = int(data.get("score_percentage", 0))
+    
+    # Calculate rewards
+    points_awarded = score_percentage * 10
+    coins_awarded = round(score_percentage * 0.35)
+    
+    # Record result and update user
+    record_quiz_result(user_id, score_percentage, points_awarded, coins_awarded)
+    
+    # Get updated totals
+    stats = get_user_stats(user_id)
+    
+    return jsonify({
+        "points_awarded": points_awarded,
+        "coins_awarded": coins_awarded,
+        "total_points": stats["total_points"],
+        "total_coins": stats["coins"]
+    })
+
 # Quiz endpoints
 @app.route("/api/quiz/start", methods=["GET"])
 def quiz_start():
     count = int(request.args.get("count", 10))
     questions = get_random_questions(count)
-    # Convert sqlite rows to dict
-    qs = []
-    for q in questions:
-        qs.append({
-            "id": q["id"],
-            "text": q["text"],
-            "A": q["option_a"],
-            "B": q["option_b"],
-            "C": q["option_c"],
-            "D": q["option_d"],
-            # No enviar correct a cliente en producción. Para v0.1 lo enviamos si DEBUG.
-            "debug_correct": q["correct"]
-        })
-    return jsonify({"questions": qs})
+    return jsonify({"questions": questions})
 
 @app.route("/api/quiz/leaderboard", methods=["GET"])
 def quiz_leaderboard():
     rows = get_leaderboard(limit=100)
-    lb = [{"user_id": r["id"], "username": r["username"], "score": r["total_score"]} for r in rows]
-    return jsonify({"leaderboard": lb})
+    return jsonify({"leaderboard": rows})
 
-# Geo endpoints (preparación)
+# Geo endpoints
 @app.route("/api/geo/random", methods=["GET"])
 def geo_random():
     conn = get_connection()
@@ -116,7 +149,6 @@ def geo_random():
     conn.close()
     if not r:
         return jsonify({"error": "no_geo"}), 404
-    # Devolver coords y example mapillary id (cliente usa Mapillary JS)
     return jsonify({
         "id": r["id"],
         "lat": r["lat"],
@@ -144,15 +176,11 @@ def translate():
 # Adaptive AI Quiz endpoint
 @app.route("/api/quiz/adaptive", methods=["POST"])
 def quiz_adaptive():
-    """
-    Generate adaptive quiz question based on player state.
-    Expects JSON: {score, rank, previous_difficulty, accuracy_last_5, category, pace}
-    """
+    """Generate adaptive quiz question based on player state."""
     from ai_quiz_generator import generate_adaptive_question, calculate_rank
     
     data = request.get_json()
     
-    # Build player state from request
     player_state = {
         "score": data.get("score", 0),
         "rank": data.get("rank", "bronze"),
@@ -162,12 +190,10 @@ def quiz_adaptive():
         "pace": data.get("pace", "normal")
     }
     
-    # Auto-calculate rank if not provided or if score suggests different rank
     calculated_rank = calculate_rank(player_state["score"])
     if player_state["rank"] != calculated_rank:
         player_state["rank"] = calculated_rank
     
-    # Generate adaptive question
     question = generate_adaptive_question(player_state)
     
     if not question:
@@ -182,7 +208,6 @@ if __name__ == "__main__":
         from quiz_seed import seed_questions
         from geo_seed import seed_geo_examples
         
-        # Check if data exists before seeding
         conn = get_connection()
         cur = conn.cursor()
         

@@ -1,139 +1,115 @@
-# Database models for PostgreSQL
 from database import get_connection
 
 def create_user(username, password_hash):
-    """Create a new user"""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id",
-        (username, password_hash)
-    )
-    user_id = cur.fetchone()['id']
+    cur.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, password_hash))
+    user_id = cur.lastrowid
     conn.commit()
     conn.close()
     return user_id
 
 def get_user_by_username(username):
-    """Get user by username"""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+    cur.execute("SELECT * FROM users WHERE username = ?", (username,))
     user = cur.fetchone()
     conn.close()
     return user
 
 def save_points(user_id, score, mode="quiz"):
-    """Save points for a user"""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO points (user_id, score, mode) VALUES (%s, %s, %s)",
-        (user_id, score, mode)
-    )
+    cur.execute("INSERT INTO points (user_id, score, mode) VALUES (?, ?, ?)", (user_id, score, mode))
     conn.commit()
     conn.close()
 
-def get_leaderboard(limit=100):
-    """Get leaderboard"""
+def get_leaderboard(limit=10):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
-        SELECT u.id, u.username, COALESCE(SUM(p.score), 0) as total_score
+        SELECT u.username, COALESCE(SUM(p.score), 0) as total
         FROM users u
         LEFT JOIN points p ON u.id = p.user_id
         GROUP BY u.id, u.username
-        ORDER BY total_score DESC
-        LIMIT %s
+        ORDER BY total DESC
+        LIMIT ?
     """, (limit,))
     rows = cur.fetchall()
     conn.close()
-    return rows
+    return [{"username": r["username"], "total": r["total"]} for r in rows]
 
 def get_random_questions(count=10):
-    """Get random quiz questions"""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM questions ORDER BY RANDOM() LIMIT %s", (count,))
-    questions = cur.fetchall()
+    cur.execute("SELECT * FROM questions ORDER BY RANDOM() LIMIT ?", (count,))
+    rows = cur.fetchall()
     conn.close()
+    
+    questions = []
+    for r in rows:
+        questions.append({
+            "id": r["id"],
+            "text": r["text"],
+            "A": r["option_a"],
+            "B": r["option_b"],
+            "C": r["option_c"],
+            "D": r["option_d"],
+            "debug_correct": r["correct"]
+        })
     return questions
 
-def get_random_geo():
-    """Get random geo location"""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM geo_locations ORDER BY RANDOM() LIMIT 1")
-    geo = cur.fetchone()
-    conn.close()
-    return geo
-
-def create_quiz_session(user_id, mode="adaptive"):
-    """Create a new quiz session"""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT INTO quiz_sessions (user_id, mode) VALUES (%s, %s) RETURNING id",
-        (user_id, mode)
-    )
-    session_id = cur.fetchone()['id']
-    conn.commit()
-    conn.close()
-    return session_id
-
-def update_quiz_session(session_id, rank=None, score=None, questions_answered=None):
-    """Update quiz session metrics"""
+def update_user_rewards(user_id, points, coins):
+    """Update user's coins and record points"""
     conn = get_connection()
     cur = conn.cursor()
     
-    updates = []
-    params = []
+    # Update coins
+    cur.execute("UPDATE users SET coins = coins + ? WHERE id = ?", (coins, user_id))
     
-    if rank:
-        updates.append("current_rank = %s")
-        params.append(rank)
-    if score is not None:
-        updates.append("total_score = %s")
-        params.append(score)
-    if questions_answered is not None:
-        updates.append("questions_answered = %s")
-        params.append(questions_answered)
+    # Record points
+    cur.execute("INSERT INTO points (user_id, score, mode) VALUES (?, ?, ?)", (user_id, points, "quiz"))
     
-    updates.append("last_activity = CURRENT_TIMESTAMP")
-    params.append(session_id)
-    
-    query = f"UPDATE quiz_sessions SET {', '.join(updates)} WHERE id = %s"
-    cur.execute(query, params)
     conn.commit()
     conn.close()
 
-def record_player_metric(user_id, session_id, difficulty, was_correct, answer_time):
-    """Record a player's answer metric"""
+def record_quiz_result(user_id, score_percentage, points_awarded, coins_awarded):
+    """Record a quiz result and update user rewards"""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        """INSERT INTO player_metrics 
-           (user_id, session_id, question_difficulty, was_correct, answer_time_seconds)
-           VALUES (%s, %s, %s, %s, %s)""",
-        (user_id, session_id, difficulty, was_correct, answer_time)
-    )
+    
+    # Insert quiz result
+    cur.execute("""
+        INSERT INTO quiz_results (user_id, score_percentage, points_awarded, coins_awarded)
+        VALUES (?, ?, ?, ?)
+    """, (user_id, score_percentage, points_awarded, coins_awarded))
+    
+    # Update user coins
+    cur.execute("UPDATE users SET coins = coins + ? WHERE id = ?", (coins_awarded, user_id))
+    
+    # Record points
+    cur.execute("INSERT INTO points (user_id, score, mode) VALUES (?, ?, ?)", (user_id, points_awarded, "quiz"))
+    
     conn.commit()
     conn.close()
 
-def get_player_accuracy(user_id, last_n=5):
-    """Get player's accuracy for last N questions"""
+def get_user_stats(user_id):
+    """Get user's total points and coins"""
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        """SELECT AVG(CASE WHEN was_correct THEN 100.0 ELSE 0.0 END) as accuracy
-           FROM (
-               SELECT was_correct FROM player_metrics
-               WHERE user_id = %s
-               ORDER BY created_at DESC
-               LIMIT %s
-           ) recent""",
-        (user_id, last_n)
-    )
-    result = cur.fetchone()
+    
+    # Get total points
+    cur.execute("SELECT COALESCE(SUM(score), 0) as total_points FROM points WHERE user_id = ?", (user_id,))
+    points_row = cur.fetchone()
+    
+    # Get coins
+    cur.execute("SELECT coins FROM users WHERE id = ?", (user_id,))
+    user_row = cur.fetchone()
+    
     conn.close()
-    return result['accuracy'] if result and result['accuracy'] else 50.0
+    
+    return {
+        "total_points": points_row["total_points"] if points_row else 0,
+        "coins": user_row["coins"] if user_row else 0
+    }
+
