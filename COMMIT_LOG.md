@@ -2,11 +2,38 @@
 
 This file tracks all changes made during development sessions for easy commit message creation.
 
+# Commit Changelog
+
+This file tracks all changes made during development sessions for easy commit message creation.
+
 ---
 
-## Session: 2025-11-27 - Vercel Deployment Configuration
+## Session: 2025-11-27 - AI Quiz & Vercel Fixes
 
 ### Added
+- `backend/ai_generator.py` - AI question generator using Hugging Face API
+- `DEPLOYMENT_STEPS.md` - Step-by-step guide for Vercel deployment
+
+### Modified
+- `api/quiz.py` - Integrated AI generation into quiz endpoint
+- `frontend/src/pages/Quiz.js` - Added "Enable AI Challenge" toggle
+- `backend/database.py` - Fixed PostgreSQL connection logic
+- `vercel.json` - Updated configuration for full stack deployment
+
+### Commit Message
+```
+feat: implement AI-powered quiz and finalize Vercel deployment
+
+- Add AI question generation using Hugging Face Mistral model
+- Add "Enable AI Challenge" toggle to Quiz UI
+- Fix PostgreSQL connection for Vercel serverless
+- Update quiz endpoint to support AI mode
+- Add comprehensive deployment guide
+
+Note: Requires HUGGINGFACE_API_TOKEN in environment variables
+```
+
+---
 - `vercel.json` - Vercel deployment configuration for Flask serverless functions
 - `api/index.py` - Serverless function wrapper for Flask app
 - `requirements.txt` (root) - Python dependencies for Vercel

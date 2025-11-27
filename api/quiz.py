@@ -13,21 +13,35 @@ CORS(app)
 @app.route('/api/quiz/start', methods=['GET'])
 def quiz_start():
     count = int(request.args.get('count', 10))
-    questions = get_random_questions(count)
+    ai_mode = request.args.get('ai_mode', 'false') == 'true'
     
-    qs = []
-    for q in questions:
-        qs.append({
-            'id': q['id'],
-            'text': q['text'],
-            'A': q['option_a'],
-            'B': q['option_b'],
-            'C': q['option_c'],
-            'D': q['option_d'],
-            'debug_correct': q['correct']
-        })
+    questions = []
     
-    return jsonify({'questions': qs})
+    if ai_mode:
+        from ai_generator import generate_f1_questions
+        # Try to generate AI questions
+        try:
+            questions = generate_f1_questions(min(count, 5)) # Limit AI to 5 to avoid timeouts
+        except Exception as e:
+            print(f"AI generation failed: {e}")
+            
+    # If AI failed or not requested, fill with DB questions
+    if len(questions) < count:
+        remaining = count - len(questions)
+        db_questions = get_random_questions(remaining)
+        
+        for q in db_questions:
+            questions.append({
+                'id': q['id'],
+                'text': q['text'],
+                'A': q['option_a'],
+                'B': q['option_b'],
+                'C': q['option_c'],
+                'D': q['option_d'],
+                'debug_correct': q['correct']
+            })
+            
+    return jsonify({'questions': questions})
 
 @app.route('/api/quiz/leaderboard', methods=['GET'])
 def quiz_leaderboard():

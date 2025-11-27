@@ -17,9 +17,11 @@ export default function Quiz() {
     // no cargar preguntas hasta que se presione start
   }, []);
 
+  const [aiMode, setAiMode] = useState(false);
+
   async function startQuiz() {
     // Add timestamp to prevent caching
-    const res = await api.get(`/api/quiz/start?count=${count}&t=${Date.now()}`);
+    const res = await api.get(`/api/quiz/start?count=${count}&ai_mode=${aiMode}&t=${Date.now()}`);
     // Shuffle client-side as well to be double sure
     const shuffled = res.questions.sort(() => Math.random() - 0.5);
     setQuestions(shuffled);
@@ -50,18 +52,36 @@ export default function Quiz() {
   }
 
   return html`
-    <div className="max-w-2xl mx-auto mt-10">
+    <div className="max-w-2xl mx-auto mt-10 px-4">
       <h2 className="text-3xl font-bold mb-6 text-warmRed">F1 Quiz Master</h2>
       ${!questions.length && html`
         <div className="bg-[#1f1f27] p-6 rounded-lg border border-gray-800">
-          <label className="block mb-4 text-lg">Number of Questions:
-            <select value=${count} onChange=${e => setCount(Number(e.target.value))} className="ml-3 bg-[#262633] p-2 rounded border border-gray-700 focus:border-warmRed outline-none">
-              <option value=${10}>10</option>
-              <option value=${20}>20</option>
-              <option value=${50}>50</option>
+          <div className="mb-6">
+            <label className="block mb-2 text-lg text-gray-300">Number of Questions:</label>
+            <select value=${count} onChange=${e => setCount(Number(e.target.value))} className="w-full bg-[#262633] p-3 rounded border border-gray-700 focus:border-warmRed outline-none text-white">
+              <option value=${10}>10 Questions</option>
+              <option value=${20}>20 Questions</option>
+              <option value=${50}>50 Questions</option>
             </select>
-          </label>
-          <button onClick=${startQuiz} className="bg-[#FF1E00] hover:bg-red-600 text-white font-bold py-2 px-6 rounded transition-colors">Start Race</button>
+          </div>
+
+          <div className="mb-8 flex items-center">
+            <input 
+              type="checkbox" 
+              id="aiMode" 
+              checked=${aiMode} 
+              onChange=${e => setAiMode(e.target.checked)}
+              className="w-5 h-5 accent-warmRed rounded focus:ring-warmRed bg-gray-700 border-gray-600"
+            />
+            <label for="aiMode" className="ml-3 text-lg text-gray-300 cursor-pointer select-none">
+              Enable AI Challenge <span className="text-xs bg-purple-900 text-purple-200 px-2 py-0.5 rounded ml-2">BETA</span>
+              <p className="text-sm text-gray-500 mt-1">Mix in AI-generated questions (slower load time)</p>
+            </label>
+          </div>
+
+          <button onClick=${startQuiz} className="w-full bg-[#FF1E00] hover:bg-red-600 text-white font-bold py-4 px-6 rounded transition-colors text-lg shadow-lg shadow-red-900/20">
+            START RACE 🏎️
+          </button>
         </div>
       `}
 

@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+
+# DotEnv
+.env
+.env.local
+.env.*.local
+
+# Database
+*.sqlite3
+*.db
+lights_out.db
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Vercel
+.vercel
+
+# OS
+.DS_Store
+Thumbs.db
