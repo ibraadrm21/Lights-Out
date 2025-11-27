@@ -1,8 +1,12 @@
 {
     "rewrites": [
         {
-            "source": "/src/:path*",
-            "destination": "/frontend/src/:path*"
+            "source": "/src/(.*)",
+            "destination": "/frontend/src/$1"
+        },
+        {
+            "source": "/api/(.*)",
+            "destination": "/api/index"
         },
         {
             "source": "/(.*)",
@@ -15,7 +19,7 @@
             "headers": [
                 {
                     "key": "Content-Type",
-                    "value": "application/javascript"
+                    "value": "application/javascript; charset=utf-8"
                 }
             ]
         }
