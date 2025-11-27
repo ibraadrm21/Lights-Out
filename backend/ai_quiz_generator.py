@@ -181,6 +181,8 @@ Requirements:
         response.raise_for_status()
         result = response.json()
         
+        print(f"✅ API Response received: {result}")
+        
         generated_text = result[0]['generated_text']
         
         # Extract JSON from response
@@ -200,13 +202,20 @@ Requirements:
                 
                 # Validate options array
                 if isinstance(question_data["options"], list) and len(question_data["options"]) == 4:
+                    print(f"✅ AI question generated successfully!")
                     return question_data
         
+        print(f"⚠️ AI response didn't match expected format, using fallback")
         # If AI generation fails, use fallback
         return generate_fallback_question(difficulty, category, rank_adjustment)
         
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ HTTP Error: {e}")
+        print(f"Response status: {response.status_code}")
+        print(f"Response body: {response.text[:500]}")
+        return generate_fallback_question(difficulty, category, rank_adjustment)
     except Exception as e:
-        print(f"AI Generation Error: {e}")
+        print(f"❌ AI Generation Error: {type(e).__name__}: {e}")
         return generate_fallback_question(difficulty, category, rank_adjustment)
 
 def generate_fallback_question(difficulty: str, category: str, rank_adjustment: str) -> Dict:
