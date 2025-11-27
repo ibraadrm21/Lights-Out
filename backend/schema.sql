@@ -37,7 +37,32 @@ CREATE TABLE IF NOT EXISTS geo_locations (
     mapillary_image_id TEXT
 );
 
+-- Quiz sessions table (for adaptive quiz tracking)
+CREATE TABLE IF NOT EXISTS quiz_sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    mode VARCHAR(50) DEFAULT 'adaptive',
+    current_rank VARCHAR(20) DEFAULT 'bronze',
+    total_score INTEGER DEFAULT 0,
+    questions_answered INTEGER DEFAULT 0,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Player metrics table (for performance tracking)
+CREATE TABLE IF NOT EXISTS player_metrics (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    session_id INTEGER REFERENCES quiz_sessions(id) ON DELETE CASCADE,
+    question_difficulty VARCHAR(20),
+    was_correct BOOLEAN,
+    answer_time_seconds INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_points_user_id ON points(user_id);
 CREATE INDEX IF NOT EXISTS idx_points_created_at ON points(created_at);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_quiz_sessions_user_id ON quiz_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_player_metrics_session_id ON player_metrics(session_id);

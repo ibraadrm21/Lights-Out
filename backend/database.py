@@ -1,27 +1,20 @@
-# PostgreSQL Database Connection for Vercel
+# SQLite Database Connection for Local Development
 import os
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from urllib.parse import urlparse
+import sqlite3
+
+DB_PATH = os.path.join(os.path.dirname(__file__), 'lights_out.db')
+
+def dict_factory(cursor, row):
+    """Convert sqlite rows to dictionaries"""
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
 def get_connection():
-    """Get PostgreSQL connection from Vercel Postgres or local"""
-    database_url = os.environ.get('POSTGRES_URL') or os.environ.get('DATABASE_URL')
-    
-    if not database_url:
-        raise Exception("No database URL found. Set POSTGRES_URL environment variable.")
-    
-    # Parse the URL
-    result = urlparse(database_url)
-    
-    conn = psycopg2.connect(
-        database=result.path[1:],
-        user=result.username,
-        password=result.password,
-        host=result.hostname,
-        port=result.port,
-        cursor_factory=RealDictCursor
-    )
+    """Get SQLite connection"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = dict_factory
     return conn
 
 def init_db():
@@ -29,12 +22,27 @@ def init_db():
     conn = get_connection()
     cur = conn.cursor()
     
-    # Read and execute schema
+    # Read and execute schema (convert PostgreSQL to SQLite)
     schema_path = os.path.join(os.path.dirname(__file__), 'schema.sql')
     with open(schema_path, 'r') as f:
         schema = f.read()
     
-    cur.execute(schema)
+    # Convert PostgreSQL syntax to SQLite
+    schema = schema.replace('SERIAL PRIMARY KEY', 'INTEGER PRIMARY KEY AUTOINCREMENT')
+    schema = schema.replace('TIMESTAMP DEFAULT CURRENT_TIMESTAMP', 'DATETIME DEFAULT CURRENT_TIMESTAMP')
+    schema = schema.replace('DECIMAL(10, 6)', 'REAL')
+    schema = schema.replace('%s', '?')
+    
+    # Execute schema (SQLite doesn't support multiple statements at once)
+    for statement in schema.split(';'):
+        if statement.strip():
+            try:
+                cur.execute(statement)
+            except sqlite3.OperationalError as e:
+                # Ignore "table already exists" errors
+                if 'already exists' not in str(e):
+                    raise
+    
     conn.commit()
     conn.close()
     print("✅ Database initialized")

@@ -8,10 +8,12 @@ import Leaderboard from "/src/pages/Leaderboard.js";
 import Login from "/src/pages/Login.js";
 import Register from "/src/pages/Register.js";
 
+import AdaptiveQuiz from "/src/pages/AdaptiveQuiz.js";
+
 import { BrowserRouter as Router, Routes as Routes_, Route as Route_ } from "https://esm.sh/react-router-dom@6.16.0?external=react,react-dom";
 
 export default function App() {
-    return html`
+  return html`
     <${Router}>
       <div className="min-h-screen bg-[#15151E] text-white font-sans">
         <${Navbar} />
@@ -19,6 +21,7 @@ export default function App() {
           <${Routes_}>
             <${Route_} path="/" element=${html`<${Home} />`} />
             <${Route_} path="/quiz" element=${html`<${Quiz} />`} />
+            <${Route_} path="/adaptive" element=${html`<${AdaptiveQuiz} />`} />
             <${Route_} path="/geo" element=${html`<${GeoGuessr} />`} />
             <${Route_} path="/profile" element=${html`<${Profile} />`} />
             <${Route_} path="/leaderboard" element=${html`<${Leaderboard} />`} />

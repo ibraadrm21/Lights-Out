@@ -20,6 +20,9 @@ export default function Navbar() {
         </${Link}>
         <div className="hidden md:flex gap-6 text-sm font-medium text-gray-300">
           <${Link} to="/quiz" className="hover:text-white transition-colors">QUIZ</${Link}>
+          <${Link} to="/adaptive" className="hover:text-white transition-colors flex items-center gap-1">
+            AI QUIZ <span className="text-xs bg-purple-900 text-purple-200 px-1.5 py-0.5 rounded">NEW</span>
+          </${Link}>
           <${Link} to="/geo" className="hover:text-white transition-colors">GEO</${Link}>
           <${Link} to="/leaderboard" className="hover:text-white transition-colors">LEADERBOARD</${Link}>
         </div>

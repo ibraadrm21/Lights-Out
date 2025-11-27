@@ -141,6 +141,41 @@ def translate():
     translations = translate_batch(texts, target_lang, source_lang)
     return jsonify({"translations": translations})
 
+# Adaptive AI Quiz endpoint
+@app.route("/api/quiz/adaptive", methods=["POST"])
+def quiz_adaptive():
+    """
+    Generate adaptive quiz question based on player state.
+    Expects JSON: {score, rank, previous_difficulty, accuracy_last_5, category, pace}
+    """
+    from ai_quiz_generator import generate_adaptive_question, calculate_rank
+    
+    data = request.get_json()
+    
+    # Build player state from request
+    player_state = {
+        "score": data.get("score", 0),
+        "rank": data.get("rank", "bronze"),
+        "previous_difficulty": data.get("previous_difficulty", "easy"),
+        "accuracy_last_5": data.get("accuracy_last_5", 50),
+        "category": data.get("category", "F1"),
+        "pace": data.get("pace", "normal")
+    }
+    
+    # Auto-calculate rank if not provided or if score suggests different rank
+    calculated_rank = calculate_rank(player_state["score"])
+    if player_state["rank"] != calculated_rank:
+        player_state["rank"] = calculated_rank
+    
+    # Generate adaptive question
+    question = generate_adaptive_question(player_state)
+    
+    if not question:
+        return jsonify({"error": "Failed to generate question"}), 500
+    
+    return jsonify(question)
+
+
 if __name__ == "__main__":
     # Ensure database is initialized and seeded
     try:

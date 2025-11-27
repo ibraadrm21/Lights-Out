@@ -4,7 +4,7 @@ import AnimatedButton from "/src/components/AnimatedButton.js";
 import { motion } from "https://esm.sh/framer-motion@10.16.4?external=react,react-dom";
 
 export default function Home() {
-    return html`
+  return html`
     <div className="flex flex-col items-center justify-center min-h-[80vh] text-center">
       <${motion.h1} 
         initial=${{ y: -50, opacity: 0 }}
@@ -22,13 +22,18 @@ export default function Home() {
         The ultimate F1 trivia and geography challenge. Test your knowledge, climb the leaderboard, and prove you are the #1 fan.
       </${motion.p}>
       
-      <div className="flex gap-6">
+      <div className="flex flex-col sm:flex-row gap-4">
         <${Link} to="/quiz">
           <${AnimatedButton} className="text-xl px-8 py-3">START QUIZ</${AnimatedButton}>
         </${Link}>
+        <${Link} to="/adaptive">
+          <button className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded font-bold hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg">
+            🤖 AI ADAPTIVE QUIZ
+          </button>
+        </${Link}>
         <${Link} to="/geo">
           <button className="px-8 py-3 border border-gray-600 rounded font-bold hover:border-white hover:bg-white/5 transition-all">
-            GEO MODE
+            🌍 GEO MODE
           </button>
         </${Link}>
       </div>
