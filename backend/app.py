@@ -1,3 +1,21 @@
+# app.py - Flask app que sirve frontend y expone API
+import os
+from flask import Flask, send_from_directory, jsonify, request
+from flask_cors import CORS
+from database import init_db, get_connection
+from models import create_user, get_user_by_username, save_points, get_leaderboard, get_random_questions
+from utils import hash_password, verify_password, create_jwt, decode_jwt
+from dotenv import load_dotenv
+from pathlib import Path
+
+load_dotenv()
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret")
+MAPILLARY_TOKEN = os.environ.get("MAPILLARY_TOKEN", "")
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIST = BASE_DIR / "frontend" / "public"
+
+app = Flask(__name__, static_folder=str(FRONTEND_DIST), static_url_path="/")
 app.config["SECRET_KEY"] = SECRET_KEY
 CORS(app)
 

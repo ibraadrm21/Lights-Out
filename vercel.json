@@ -1,33 +1,17 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "backend/app.py",
-            "use": "@vercel/python",
-            "config": {
-                "maxLambdaSize": "15mb"
-            }
-        },
-        {
-            "src": "frontend/public/**",
-            "use": "@vercel/static"
-        }
-    ],
+    "buildCommand": "echo 'No build needed'",
+    "outputDirectory": "frontend/public",
     "routes": [
         {
-            "src": "/api/(.*)",
-            "dest": "backend/app.py"
+            "src": "/src/(.*)",
+            "dest": "/src/$1"
         },
         {
-            "src": "/src/(.*)",
-            "dest": "backend/app.py"
+            "handle": "filesystem"
         },
         {
             "src": "/(.*)",
-            "dest": "frontend/public/$1"
+            "dest": "/index.html"
         }
-    ],
-    "env": {
-        "FLASK_ENV": "production"
-    }
+    ]
 }
