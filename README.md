@@ -17,18 +17,6 @@
 - **Backend**: Flask, SQLite
 - **Deployment**: Vercel (frontend), Local (backend)
 
-## Local Development
-
-```bash
-# Backend
-cd backend
-pip install -r requirements.txt
-python app.py
-
-# Frontend
-# Open http://localhost:5000
-```
-
 ## Status
 
 **Version**: v0.2.0-alpha  
