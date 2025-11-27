@@ -1,17 +1,23 @@
 {
-    "buildCommand": "echo 'No build needed'",
-    "outputDirectory": "frontend/public",
-    "routes": [
+    "rewrites": [
         {
-            "src": "/src/(.*)",
-            "dest": "/src/$1"
+            "source": "/src/:path*",
+            "destination": "/frontend/src/:path*"
         },
         {
-            "handle": "filesystem"
-        },
+            "source": "/(.*)",
+            "destination": "/frontend/public/index.html"
+        }
+    ],
+    "headers": [
         {
-            "src": "/(.*)",
-            "dest": "/index.html"
+            "source": "/src/(.*).js",
+            "headers": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/javascript"
+                }
+            ]
         }
     ]
 }
