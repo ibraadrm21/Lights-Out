@@ -3,6 +3,7 @@ import { useState } from "react";
 import api from "/src/utils/api.js";
 import { motion } from "https://esm.sh/framer-motion@10.16.4?external=react,react-dom";
 
+<<<<<<< Updated upstream
 export default function AdaptiveQuiz() {
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -32,9 +33,191 @@ export default function AdaptiveQuiz() {
       alert("Failed to load quiz questions");
     } finally {
       setLoading(false);
+=======
+// Rank badge component
+function RankBadge({ rank }) {
+  const rankColors = {
+    bronze: "from-amber-700 to-amber-900",
+    silver: "from-gray-300 to-gray-500",
+    gold: "from-yellow-400 to-yellow-600",
+    platinum: "from-cyan-400 to-cyan-600",
+    diamond: "from-blue-400 to-purple-600"
+  };
+
+  const rankIcons = {
+    bronze: "🥉",
+    silver: "🥈",
+    gold: "🥇",
+    platinum: "💎",
+    diamond: "👑"
+  };
+
+  return html`
+    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${rankColors[rank]} text-white font-bold text-sm shadow-lg">
+      <span>${rankIcons[rank]}</span>
+      <span className="uppercase">${rank}</span>
+    </div>
+  `;
+}
+
+// Difficulty indicator component
+function DifficultyIndicator({ difficulty }) {
+  const colors = {
+    easy: "bg-green-500",
+    medium: "bg-yellow-500",
+    hard: "bg-red-500"
+  };
+
+  return html`
+    <div className="flex items-center gap-2">
+      <div className="w-2 h-2 rounded-full ${colors[difficulty]}"></div>
+      <span className="text-sm text-gray-400 capitalize">${difficulty}</span>
+    </div>
+  `;
+}
+
+export default function AdaptiveQuiz() {
+  const [playerState, setPlayerState] = useState({
+    score: 0,
+    rank: "bronze",
+    previous_difficulty: "easy",
+    accuracy_last_5: 50,
+    category: "F1",
+    pace: "normal"
+  });
+
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [started, setStarted] = useState(false);
+  const [answerHistory, setAnswerHistory] = useState([]);
+  const [questionStartTime, setQuestionStartTime] = useState(null);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [lastAnswer, setLastAnswer] = useState(null);
+  const [questionsAnswered, setQuestionsAnswered] = useState(0);
+
+  const [seenQuestions, setSeenQuestions] = useState([]);
+  const [nextQuestionData, setNextQuestionData] = useState(null);
+  const [fetchingNext, setFetchingNext] = useState(false);
+
+  const token = localStorage.getItem("token");
+  const userId = localStorage.getItem("user_id");
+
+  // Calculate accuracy from last 5 answers
+  function calculateAccuracy() {
+    if (answerHistory.length === 0) return 50;
+    const recent = answerHistory.slice(-5);
+    const correct = recent.filter(a => a.correct).length;
+    return (correct / recent.length) * 100;
+  }
+
+  // Calculate answer pace
+  function calculatePace(timeSeconds) {
+    if (timeSeconds < 5) return "fast";
+    if (timeSeconds > 15) return "slow";
+    return "normal";
+  }
+
+  // Fetch a single question (helper)
+  async function fetchQuestionData(currentState, currentSeen) {
+    try {
+      const response = await api.post("/api/quiz/adaptive", {
+        ...currentState,
+        seen_questions: currentSeen
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to fetch question:", error);
+      return null;
     }
   }
 
+  // Start the adaptive quiz
+  async function startQuiz() {
+    setStarted(true);
+    setLoading(true);
+
+    const initialState = {
+      score: 0,
+      rank: "bronze",
+      previous_difficulty: "easy",
+      accuracy_last_5: 50,
+      category: playerState.category,
+      pace: "normal"
+    };
+
+    setPlayerState(initialState);
+    setAnswerHistory([]);
+    setQuestionsAnswered(0);
+    setSeenQuestions([]);
+
+    // Fetch first question
+    const firstQ = await fetchQuestionData(initialState, []);
+
+    if (firstQ) {
+      setCurrentQuestion(firstQ);
+      setQuestionStartTime(Date.now());
+      setSeenQuestions([firstQ.question]);
+
+      // Pre-fetch second question immediately
+      setFetchingNext(true);
+      fetchQuestionData(initialState, [firstQ.question]).then(nextQ => {
+        setNextQuestionData(nextQ);
+        setFetchingNext(false);
+      });
+    } else {
+      alert("Failed to start quiz. Please try again.");
+      setStarted(false);
+    }
+    setLoading(false);
+  }
+
+  // Handle answer selection
+  function handleAnswer(selectedIndex) {
+    if (!currentQuestion || showExplanation) return;
+
+    const answerTime = Math.floor((Date.now() - questionStartTime) / 1000);
+    const isCorrect = selectedIndex === currentQuestion.correct_answer_index;
+
+    // Update answer history
+    const newAnswer = {
+      correct: isCorrect,
+      time: answerTime,
+      difficulty: currentQuestion.difficulty
+    };
+    const newHistory = [...answerHistory, newAnswer];
+    setAnswerHistory(newHistory);
+    setLastAnswer({ ...newAnswer, selectedIndex });
+
+    // Update player state
+    const newScore = playerState.score + (isCorrect ? 10 : 0);
+
+    // Recalculate accuracy based on updated history
+    const recent = newHistory.slice(-5);
+    const correctCount = recent.filter(a => a.correct).length;
+    const newAccuracy = (correctCount / recent.length) * 100;
+
+    const newPace = calculatePace(answerTime);
+
+    const newState = {
+      ...playerState,
+      score: newScore,
+      previous_difficulty: currentQuestion.difficulty,
+      accuracy_last_5: newAccuracy,
+      pace: newPace
+    };
+
+    // Check for rank adjustment
+    if (currentQuestion.rank_adjustment === "increase") {
+      const ranks = ["bronze", "silver", "gold", "platinum", "diamond"];
+      const currentIndex = ranks.indexOf(newState.rank);
+      if (currentIndex < ranks.length - 1) {
+        newState.rank = ranks[currentIndex + 1];
+      }
+>>>>>>> Stashed changes
+    }
+  }
+
+<<<<<<< Updated upstream
   function handleAnswer(selectedIndex) {
     if (showExplanation) return;
 
@@ -46,9 +229,20 @@ export default function AdaptiveQuiz() {
 
     if (isCorrect) {
       setScore(score + 10);
+=======
+    setPlayerState(newState);
+    setQuestionsAnswered(questionsAnswered + 1);
+    setShowExplanation(true);
+
+    // Save points if logged in
+    if (token && userId && isCorrect) {
+      const pointsUrl = "/api/points/" + userId;
+      api.post(pointsUrl, { score: 10, mode: "adaptive" }, token);
+>>>>>>> Stashed changes
     }
   }
 
+<<<<<<< Updated upstream
   function nextQuestion() {
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex(currentIndex + 1);
@@ -77,6 +271,72 @@ export default function AdaptiveQuiz() {
 
   const currentQuestion = questions[currentIndex];
   const correctIndex = currentQuestion ? (currentQuestion.debug_correct.charCodeAt(0) - 65) : -1;
+=======
+    // Pre-fetch NEXT question now (while user is reading explanation)
+    // We use the updated state and the current seen list + current question
+    // Note: nextQuestionData might already be populated from previous pre-fetch, 
+    // but we need to ensure we have a buffer. 
+    // Actually, the best strategy is:
+    // 1. If we have nextQuestionData, great.
+    // 2. If not, we fetch it now.
+    // But wait, we want to fetch question N+2 while user views N's explanation?
+    // No, we just need to ensure N+1 is ready.
+
+    if (!nextQuestionData && !fetchingNext) {
+      setFetchingNext(true);
+      fetchQuestionData(newState, [...seenQuestions, currentQuestion.question]).then(nextQ => {
+        setNextQuestionData(nextQ);
+        setFetchingNext(false);
+      });
+    }
+  }
+
+  // Continue to next question
+  async function nextQuestion() {
+    setShowExplanation(false);
+    setLastAnswer(null);
+    setLoading(true);
+
+    if (nextQuestionData) {
+      // Use pre-fetched question
+      const nextQ = nextQuestionData;
+      setCurrentQuestion(nextQ);
+      setQuestionStartTime(Date.now());
+      setSeenQuestions(prev => [...prev, nextQ.question]);
+      setNextQuestionData(null);
+      setLoading(false);
+
+      // Pre-fetch the one after that
+      setFetchingNext(true);
+      const updatedSeen = [...seenQuestions, nextQ.question];
+      fetchQuestionData(playerState, updatedSeen).then(q => {
+        setNextQuestionData(q);
+        setFetchingNext(false);
+      });
+
+    } else {
+      // Fallback if pre-fetch failed or wasn't ready
+      const nextQ = await fetchQuestionData(playerState, seenQuestions);
+      if (nextQ) {
+        setCurrentQuestion(nextQ);
+        setQuestionStartTime(Date.now());
+        setSeenQuestions(prev => [...prev, nextQ.question]);
+
+        // Start pre-fetch for next
+        setFetchingNext(true);
+        fetchQuestionData(playerState, [...seenQuestions, nextQ.question]).then(q => {
+          setNextQuestionData(q);
+          setFetchingNext(false);
+        });
+      } else {
+        alert("Failed to generate question. Please try again.");
+      }
+      setLoading(false);
+    }
+  }
+
+  const startedContent = started && html`<${RankBadge} rank=${playerState.rank} />`;
+>>>>>>> Stashed changes
 
   return html`
     <div className="max-w-3xl mx-auto mt-10 px-4">
@@ -123,6 +383,7 @@ export default function AdaptiveQuiz() {
             <div className="mb-6 text-xl font-medium">${currentQuestion.text}</div>
             
             <div className="grid grid-cols-1 gap-3">
+<<<<<<< Updated upstream
               ${["A", "B", "C", "D"].map((letter, index) => {
     let buttonClass = "p-4 bg-[#262633] rounded border transition-all text-left";
 
@@ -130,6 +391,15 @@ export default function AdaptiveQuiz() {
       if (index === correctIndex) {
         buttonClass += " border-green-500 bg-green-900/20";
       } else if (selectedAnswer === index && index !== correctIndex) {
+=======
+              ${currentQuestion.options.map((option, index) => {
+    let buttonClass = "p-4 bg-[#262633] rounded border transition-all text-left";
+
+    if (showExplanation) {
+      if (index === currentQuestion.correct_answer_index) {
+        buttonClass += " border-green-500 bg-green-900/20";
+      } else if (lastAnswer && index === lastAnswer.selectedIndex && !lastAnswer.correct) {
+>>>>>>> Stashed changes
         buttonClass += " border-red-500 bg-red-900/20";
       } else {
         buttonClass += " border-gray-700 opacity-50";
@@ -138,7 +408,11 @@ export default function AdaptiveQuiz() {
       buttonClass += " hover:bg-[#2b2b39] hover:border-warmRed border-transparent cursor-pointer";
     }
 
+<<<<<<< Updated upstream
     const correctIcon = showExplanation && index === correctIndex ? html`<span className="ml-2 text-green-400">✓</span>` : null;
+=======
+    const correctIcon = showExplanation && index === currentQuestion.correct_answer_index ? html`<span className="ml-2 text-green-400">✓</span>` : null;
+>>>>>>> Stashed changes
 
     return html`
                   <button 
@@ -161,12 +435,27 @@ export default function AdaptiveQuiz() {
                 animate=${{ opacity: 1, height: "auto" }}
                 className="mt-6 p-4 bg-[#262633] rounded border border-gray-700"
               >
+<<<<<<< Updated upstream
                 <div className="mb-4 text-sm">
                   ${selectedAnswer === correctIndex
           ? html`<span className="text-green-400 text-lg">✓ Correct! +10 points</span>`
           : html`<span className="text-red-400 text-lg">✗ Incorrect</span>`
         }
                 </div>
+=======
+                <div className="text-sm text-gray-400 mb-2">Explanation:</div>
+                <div className="text-gray-200">${currentQuestion.explanation}</div>
+                
+                ${lastAnswer && html`
+                  <div className="mt-4 text-sm">
+                    ${lastAnswer.correct
+            ? html`<span className="text-green-400">✓ Correct! +10 points</span>`
+            : html`<span className="text-red-400">✗ Incorrect</span>`
+          }
+                    <span className="text-gray-500 ml-3">Answered in ${lastAnswer.time}s</span>
+                  </div>
+                `}
+>>>>>>> Stashed changes
                 
                 <button
                   onClick=${nextQuestion}
