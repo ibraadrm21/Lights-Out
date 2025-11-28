@@ -265,27 +265,6 @@ def quiz_adaptive():
         "score": data.get("score", 0),
         "rank": data.get("rank", "bronze"),
         "previous_difficulty": data.get("previous_difficulty", "easy"),
-        "accuracy_last_5": data.get("accuracy_last_5", 50),
-        "category": data.get("category", "F1"),
-        "pace": data.get("pace", "normal")
-    }
-    
-    calculated_rank = calculate_rank(player_state["score"])
-    if player_state["rank"] != calculated_rank:
-        player_state["rank"] = calculated_rank
-    
-    question = generate_adaptive_question(player_state)
-    
-    if not question:
-        return jsonify({"error": "Failed to generate question"}), 500
-    
-    return jsonify(question)
-
-
-# Admin endpoints
-@app.route("/api/admin/users", methods=["GET"])
-@require_admin
-def admin_get_users():
     users = get_all_users()
     return jsonify({"users": users})
 
