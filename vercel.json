@@ -1,13 +1,12 @@
 {
     "version": 2,
+    "buildCommand": "cd frontend && npm install && npm run build",
+    "outputDirectory": "frontend/dist",
+    "installCommand": "cd frontend && npm install",
     "builds": [
         {
             "src": "api/*.py",
             "use": "@vercel/python"
-        },
-        {
-            "src": "frontend/public/**",
-            "use": "@vercel/static"
         }
     ],
     "routes": [
@@ -22,6 +21,10 @@
         {
             "src": "/api/quiz/start",
             "dest": "api/quiz.py"
+        },
+        {
+            "src": "/api/quiz/adaptive",
+            "dest": "api/adaptive_quiz.py"
         },
         {
             "src": "/api/quiz/leaderboard",
@@ -40,21 +43,25 @@
             "dest": "api/translate.py"
         },
         {
-            "src": "/src/(.*)",
-            "dest": "/frontend/src/$1"
+            "src": "/assets/(.*)",
+            "dest": "/frontend/dist/assets/$1"
+        },
+        {
+            "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|webp))",
+            "dest": "/frontend/dist/$1"
         },
         {
             "src": "/(.*)",
-            "dest": "/frontend/public/index.html"
+            "dest": "/frontend/dist/index.html"
         }
     ],
     "headers": [
         {
-            "source": "/src/(.*).js",
+            "source": "/assets/(.*)",
             "headers": [
                 {
-                    "key": "Content-Type",
-                    "value": "application/javascript; charset=utf-8"
+                    "key": "Cache-Control",
+                    "value": "public, max-age=31536000, immutable"
                 }
             ]
         }
