@@ -28,6 +28,7 @@ export default function Register() {
       localStorage.setItem("token", res.token);
       localStorage.setItem("user_id", res.user_id);
       localStorage.setItem("username", username);
+      localStorage.setItem("role", res.role || "user");
       navigate("/profile");
     }
   }

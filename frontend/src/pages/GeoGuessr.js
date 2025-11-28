@@ -56,7 +56,7 @@ export default function GeoGuessr() {
           <div className="w-full flex flex-col">
             <div className="w-full h-96 bg-black relative">
               <img 
-                src=${geo.mapillary_image_id.startsWith("http") ? geo.mapillary_image_id : `https://images.mapillary.com/${geo.mapillary_image_id}/thumb-1024.jpg`} 
+                src=${geo.mapillary_image_id.startsWith("http") || geo.mapillary_image_id.startsWith("/") ? geo.mapillary_image_id : `https://images.mapillary.com/${geo.mapillary_image_id}/thumb-1024.jpg`} 
                 alt="F1 Circuit Location" 
                 className="w-full h-full object-cover"
                 onError=${(e) => {

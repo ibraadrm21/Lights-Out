@@ -138,6 +138,17 @@ export default function Navbar() {
                       <span>👤</span>
                       <span>Mi Perfil</span>
                     </${Link}>
+
+                    ${localStorage.getItem("role") === "admin" && html`
+                      <${Link} 
+                        to="/admin" 
+                        className="block px-4 py-2 hover:bg-[#353548] transition-colors flex items-center space-x-2 text-red-400"
+                        onClick=${() => setShowDropdown(false)}
+                      >
+                        <span>🛡️</span>
+                        <span>Admin Dashboard</span>
+                      </${Link}>
+                    `}
                     
                     <${Link} 
                       to="/settings" 

@@ -28,7 +28,14 @@ export default function Login() {
       localStorage.setItem("token", res.token);
       localStorage.setItem("user_id", res.user_id);
       localStorage.setItem("username", username);
-      navigate("/profile");
+      localStorage.setItem("role", res.role);
+
+      // Redirect based on role
+      if (res.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/profile");
+      }
     }
   }
 

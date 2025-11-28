@@ -3,8 +3,9 @@ import os
 from flask import Flask, send_from_directory, jsonify, request
 from flask_cors import CORS
 from database import init_db, get_connection
-from models import create_user, get_user_by_username, save_points, get_leaderboard, get_random_questions, record_quiz_result, get_user_stats
+from models import create_user, get_user_by_username, get_user_by_id, update_username, update_password, save_points, get_leaderboard, get_random_questions, record_quiz_result, get_user_stats, get_all_users, update_user_admin, delete_user, get_admin_stats
 from utils import hash_password, verify_password, create_jwt, decode_jwt
+from functools import wraps
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -21,6 +22,23 @@ CORS(app)
 
 # Initialize DB
 init_db()
+
+# Admin middleware
+def require_admin(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        token = request.headers.get("Authorization", "").replace("Bearer ", "")
+        payload = decode_jwt(token)
+        if not payload:
+            return jsonify({"error": "unauthorized"}), 401
+        
+        # Check if user is admin
+        user = get_user_by_id(payload["user_id"])
+        if not user or user.get("role") != "admin":
+            return jsonify({"error": "forbidden", "message": "Admin access required"}), 403
+        
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Serve index.html
 @app.route("/")
@@ -42,8 +60,8 @@ def register():
         return jsonify({"error":"username_exists"}), 400
     pwd_hash = hash_password(password)
     user_id = create_user(username, pwd_hash)
-    token = create_jwt({"user_id": user_id, "username": username})
-    return jsonify({"token": token, "user_id": user_id})
+    token = create_jwt({"user_id": user_id, "username": username, "role": "user"})
+    return jsonify({"token": token, "user_id": user_id, "role": "user"})
 
 @app.route("/api/login", methods=["POST"])
 def login():
@@ -55,17 +73,22 @@ def login():
         return jsonify({"error":"invalid_credentials"}), 401
     if not verify_password(user["password_hash"], password):
         return jsonify({"error":"invalid_credentials"}), 401
-    token = create_jwt({"user_id": user["id"], "username": username})
-    return jsonify({"token": token, "user_id": user["id"]})
+    
+    # Include role in JWT token
+    role = user.get("role", "user")
+    token = create_jwt({"user_id": user["id"], "username": username, "role": role})
+    
+    return jsonify({
+        "token": token, 
+        "user_id": user["id"],
+        "role": role
+    })
 
 # User profile endpoint
 @app.route("/api/user/<int:user_id>", methods=["GET"])
 def get_user_profile(user_id):
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT id, username, coins FROM users WHERE id = ?", (user_id,))
-    user = cur.fetchone()
-    conn.close()
+    stats = get_user_stats(user_id)
+    user = get_user_by_id(user_id)
     
     if not user:
         return jsonify({"error": "User not found"}), 404
@@ -73,8 +96,65 @@ def get_user_profile(user_id):
     return jsonify({
         "id": user["id"],
         "username": user["username"],
-        "coins": user["coins"] or 0
+        "coins": stats["coins"],
+        "total_points": stats["total_points"],
+        "rank": stats["rank"]
     })
+
+# User configuration endpoints
+@app.route("/api/user/update-username", methods=["PUT"])
+def update_user_username():
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    payload = decode_jwt(token)
+    if not payload:
+        return jsonify({"error": "unauthorized"}), 401
+    
+    user_id = payload["user_id"]
+    data = request.get_json()
+    new_username = data.get("username", "").strip()
+    
+    if not new_username or len(new_username) < 3:
+        return jsonify({"error": "username_too_short"}), 400
+    
+    result = update_username(user_id, new_username)
+    
+    if not result["success"]:
+        return jsonify({"error": result["error"]}), 400
+    
+    # Generate new token with updated username
+    new_token = create_jwt({"user_id": user_id, "username": new_username})
+    
+    return jsonify({
+        "success": True,
+        "username": new_username,
+        "token": new_token
+    })
+
+@app.route("/api/user/update-password", methods=["PUT"])
+def update_user_password():
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    payload = decode_jwt(token)
+    if not payload:
+        return jsonify({"error": "unauthorized"}), 401
+    
+    user_id = payload["user_id"]
+    data = request.get_json()
+    current_password = data.get("current_password", "")
+    new_password = data.get("new_password", "")
+    
+    if not new_password or len(new_password) < 6:
+        return jsonify({"error": "password_too_short"}), 400
+    
+    # Verify current password
+    user = get_user_by_id(user_id)
+    if not user or not verify_password(user["password_hash"], current_password):
+        return jsonify({"error": "invalid_current_password"}), 401
+    
+    # Update password
+    new_hash = hash_password(new_password)
+    update_password(user_id, new_hash)
+    
+    return jsonify({"success": True})
 
 # Points endpoints
 @app.route("/api/points/<int:user_id>", methods=["GET"])
@@ -200,6 +280,63 @@ def quiz_adaptive():
         return jsonify({"error": "Failed to generate question"}), 500
     
     return jsonify(question)
+
+
+# Admin endpoints
+@app.route("/api/admin/users", methods=["GET"])
+@require_admin
+def admin_get_users():
+    users = get_all_users()
+    return jsonify({"users": users})
+
+@app.route("/api/admin/users/<int:user_id>", methods=["GET"])
+@require_admin
+def admin_get_user(user_id):
+    user = get_user_by_id(user_id)
+    if not user:
+        return jsonify({"error": "user_not_found"}), 404
+    
+    # Get stats for this user
+    stats = get_user_stats(user_id)
+    
+    return jsonify({
+        "id": user["id"],
+        "username": user["username"],
+        "role": user.get("role", "user"),
+        "coins": user.get("coins", 0),
+        "total_points": user.get("total_points", 0),
+        "created_at": user.get("created_at"),
+        "rank": stats["rank"]
+    })
+
+@app.route("/api/admin/users/<int:user_id>", methods=["PUT"])
+@require_admin
+def admin_update_user(user_id):
+    data = request.get_json()
+    result = update_user_admin(user_id, data)
+    if not result["success"]:
+        return jsonify({"error": result.get("error", "update_failed")}), 400
+    return jsonify({"success": True})
+
+@app.route("/api/admin/users/<int:user_id>", methods=["DELETE"])
+@require_admin
+def admin_delete_user(user_id):
+    # Prevent deleting self
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+    payload = decode_jwt(token)
+    if payload["user_id"] == user_id:
+        return jsonify({"error": "cannot_delete_self"}), 400
+        
+    result = delete_user(user_id)
+    if not result["success"]:
+        return jsonify({"error": result.get("error", "delete_failed")}), 400
+    return jsonify({"success": True})
+
+@app.route("/api/admin/stats", methods=["GET"])
+@require_admin
+def admin_dashboard_stats():
+    stats = get_admin_stats()
+    return jsonify(stats)
 
 
 if __name__ == "__main__":
