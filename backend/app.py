@@ -9,24 +9,15 @@ from functools import wraps
 from dotenv import load_dotenv
 from pathlib import Path
 
+# Import new controllers
+from controllers.auth import auth_bp
+from controllers.points import points_bp
+
 load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret")
 MAPILLARY_TOKEN = os.environ.get("MAPILLARY_TOKEN", "")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIST = BASE_DIR / "frontend" / "public"
-
-app = Flask(__name__, static_folder=str(FRONTEND_DIST), static_url_path="/")
-app.config["SECRET_KEY"] = SECRET_KEY
-CORS(app)
-
-# Initialize DB
-init_db()
-
-# Admin middleware
-def require_admin(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
         token = request.headers.get("Authorization", "").replace("Bearer ", "")
         payload = decode_jwt(token)
         if not payload:
@@ -48,7 +39,17 @@ def index():
 # Serve src folder for No-NPM setup
 @app.route("/src/<path:path>")
 def serve_src(path):
-    return send_from_directory(BASE_DIR / "frontend" / "src", path)
+    from flask import make_response
+    response = make_response(send_from_directory(BASE_DIR / "frontend" / "src", path))
+    # Set correct MIME type for .jsx files
+    if path.endswith('.jsx'):
+        response.headers['Content-Type'] = 'application/javascript; charset=utf-8'
+    return response
+
+# Serve uploaded files
+@app.route("/uploads/<path:filename>")
+def serve_uploads(filename):
+    return send_from_directory(os.path.join(app.static_folder, "uploads"), filename)
 
 # Auth endpoints
 @app.route("/api/register", methods=["POST"])
@@ -265,6 +266,27 @@ def quiz_adaptive():
         "score": data.get("score", 0),
         "rank": data.get("rank", "bronze"),
         "previous_difficulty": data.get("previous_difficulty", "easy"),
+        "accuracy_last_5": data.get("accuracy_last_5", 50),
+        "category": data.get("category", "F1"),
+        "pace": data.get("pace", "normal")
+    }
+    
+    calculated_rank = calculate_rank(player_state["score"])
+    if player_state["rank"] != calculated_rank:
+        player_state["rank"] = calculated_rank
+    
+    question = generate_adaptive_question(player_state)
+    
+    if not question:
+        return jsonify({"error": "Failed to generate question"}), 500
+    
+    return jsonify(question)
+
+
+# Admin endpoints
+@app.route("/api/admin/users", methods=["GET"])
+@require_admin
+def admin_get_users():
     users = get_all_users()
     return jsonify({"users": users})
 

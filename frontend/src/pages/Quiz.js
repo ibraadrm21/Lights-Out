@@ -1,8 +1,9 @@
 import { React, html } from "/src/utils/htm.js";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import api from "/src/utils/api.js";
 import ScoreWindow from "/src/components/ScoreWindow.js";
 import { motion } from "https://esm.sh/framer-motion@10.16.4?external=react,react-dom";
+import { UserContext } from "/src/context/UserContext.jsx";
 
 export default function Quiz() {
   const [count, setCount] = useState(10);
@@ -10,42 +11,60 @@ export default function Quiz() {
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [finished, setFinished] = useState(false);
-  const token = localStorage.getItem("token");
-  const userId = localStorage.getItem("user_id");
-
-  useEffect(() => {
-    // no cargar preguntas hasta que se presione start
-  }, []);
-
-  const [aiMode, setAiMode] = useState(false);
+  const [rewards, setRewards] = useState(null);
+  const { token, applyReward, user } = useContext(UserContext);
 
   async function startQuiz() {
     // Add timestamp to prevent caching
-    const res = await api.get(`/api/quiz/start?count=${count}&ai_mode=${aiMode}&t=${Date.now()}`);
+    const res = await api.get(`/api/quiz/start?count=${count}&t=${Date.now()}`);
     // Shuffle client-side as well to be double sure
     const shuffled = res.questions.sort(() => Math.random() - 0.5);
     setQuestions(shuffled);
     setIdx(0);
     setScore(0);
     setFinished(false);
+    setRewards(null);
   }
 
-  function answer(option) {
+  async function answer(option) {
     const q = questions[idx];
     const correct = q.debug_correct; // EN PRODUCCIÓN remover
     if (option === correct) {
       setScore(s => s + 10);
-      // animación / feedback
-    } else {
-      // feedback incorrecto
     }
+
     if (idx + 1 >= questions.length) {
-      setFinished(true);
-      // Guardar puntos si hay sesión
-      if (token && userId) {
-        api.post(`/api/points/${userId}`, { score, mode: "quiz" }, token);
-        // actualizar leaderboard client-side si quieres
+      // Quiz finished - calculate and submit results
+      const finalScore = option === correct ? score + 10 : score;
+      const scorePercentage = Math.round((finalScore / (questions.length * 10)) * 100);
+
+      // Submit quiz result
+      try {
+        const res = await fetch("/api/quiz/result", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { "Authorization": `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({
+            score_percentage: scorePercentage,
+            quiz_id: 1,
+            base_points: 100
+          })
+        });
+
+        const result = await res.json();
+        setRewards(result);
+
+        // If user is authenticated, apply rewards to UI
+        if (token && result.points_awarded && result.coins_awarded) {
+          applyReward(result.points_awarded, result.coins_awarded);
+        }
+      } catch (error) {
+        console.error("Failed to submit quiz result:", error);
       }
+
+      setFinished(true);
     } else {
       setIdx(idx + 1);
     }
@@ -63,20 +82,6 @@ export default function Quiz() {
               <option value=${20}>20 Questions</option>
               <option value=${50}>50 Questions</option>
             </select>
-          </div>
-
-          <div className="mb-8 flex items-center">
-            <input 
-              type="checkbox" 
-              id="aiMode" 
-              checked=${aiMode} 
-              onChange=${e => setAiMode(e.target.checked)}
-              className="w-5 h-5 accent-warmRed rounded focus:ring-warmRed bg-gray-700 border-gray-600"
-            />
-            <label for="aiMode" className="ml-3 text-lg text-gray-300 cursor-pointer select-none">
-              Enable AI Challenge <span className="text-xs bg-purple-900 text-purple-200 px-2 py-0.5 rounded ml-2">BETA</span>
-              <p className="text-sm text-gray-500 mt-1">Mix in AI-generated questions (slower load time)</p>
-            </label>
           </div>
 
           <button onClick=${startQuiz} className="w-full bg-[#FF1E00] hover:bg-red-600 text-white font-bold py-4 px-6 rounded transition-colors text-lg shadow-lg shadow-red-900/20">
@@ -116,6 +121,36 @@ export default function Quiz() {
         >
           <h3 className="text-2xl font-bold mb-2">Chequered Flag! 🏁</h3>
           <div className="text-4xl font-bold text-warmRed mb-4">${score} pts</div>
+          
+          ${rewards && html`
+            <div className="mb-6 space-y-3">
+              <div className="bg-[#2A2A3C] p-4 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Points Earned</div>
+                <div className="text-2xl font-bold text-yellow-400">⭐ ${rewards.points_awarded}</div>
+              </div>
+              <div className="bg-[#2A2A3C] p-4 rounded-lg">
+                <div className="text-sm text-gray-400 mb-1">Coins Earned</div>
+                <div className="text-2xl font-bold text-yellow-600">🪙 ${rewards.coins_awarded}</div>
+              </div>
+              
+              ${!token && html`
+                <div className="bg-blue-900/30 border border-blue-500 text-blue-200 px-4 py-3 rounded mt-4">
+                  <p className="font-bold mb-2">💡 Tip: Register to save your progress!</p>
+                  <p className="text-sm">Your rewards were calculated but not saved. Create an account to track your points and compete on the leaderboard!</p>
+                  <a href="/register" className="inline-block mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-bold transition-colors">
+                    Register Now
+                  </a>
+                </div>
+              `}
+              
+              ${token && rewards.points_total !== undefined && html`
+                <div className="text-sm text-gray-400 mt-4">
+                  Total: ${rewards.points_total} points | ${rewards.coins_total} coins
+                </div>
+              `}
+            </div>
+          `}
+          
           <button onClick=${() => setQuestions([])} className="text-gray-400 hover:text-white underline">Back to Paddock</button>
         </${motion.div}>
       `}

@@ -1,41 +1,19 @@
 import { React, html } from "/src/utils/htm.js";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { Link, useLocation, useNavigate } from "https://esm.sh/react-router-dom@6.16.0?external=react,react-dom";
-import api from "/src/utils/api.js";
+import { UserContext } from "/src/context/UserContext.jsx";
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [userStats, setUserStats] = useState(null);
-  const [username, setUsername] = useState(null);
+  const { user, logout } = useContext(UserContext);
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownTimeoutRef = useRef(null);
 
+  // Check if user is admin
+  const isAdmin = localStorage.getItem("role") === "admin";
+
   const isActive = (path) => location.pathname === path ? "text-red-500 font-bold" : "text-gray-300 hover:text-white";
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUsername = localStorage.getItem("username");
-    const userId = localStorage.getItem("user_id");
-
-    if (token && userId) {
-      setUsername(storedUsername);
-      // Fetch user stats
-      api.get(`/api/points/${userId}`)
-        .then(data => {
-          // Also get coins from user
-          return fetch(`http://localhost:5000/api/user/${userId}`)
-            .then(res => res.json())
-            .then(userData => {
-              setUserStats({
-                points: data.total || 0,
-                coins: userData.coins || 0
-              });
-            });
-        })
-        .catch(err => console.error("Failed to load stats", err));
-    }
-  }, [location]);
 
   const handleMouseEnter = () => {
     // Clear any existing timeout
@@ -53,11 +31,7 @@ export default function Navbar() {
   };
 
   function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("username");
-    setUserStats(null);
-    setUsername(null);
+    logout();
     setShowDropdown(false);
     navigate("/");
   }
@@ -74,21 +48,27 @@ export default function Navbar() {
           <${Link} to="/adaptive" className=${isActive("/adaptive")}>AI Quiz</${Link}>
           <${Link} to="/geo" className=${isActive("/geo")}>GeoGuessr</${Link}>
           <${Link} to="/leaderboard" className=${isActive("/leaderboard")}>Leaderboard</${Link}>
+          ${isAdmin && html`
+            <${Link} to="/admin" className="${isActive("/admin")} flex items-center gap-1">
+              <span>🛡️</span>
+              <span>Dashboard</span>
+            </${Link}>
+          `}
         </div>
 
         <div className="flex items-center space-x-4">
-          ${username && userStats ? html`
+          ${user ? html`
             <div className="flex items-center space-x-4">
               <!-- Points Display -->
               <div className="flex items-center space-x-2 bg-[#2A2A3C] px-3 py-2 rounded-lg">
                 <span className="text-yellow-400">⭐</span>
-                <span className="font-mono font-bold">${userStats.points}</span>
+                <span className="font-mono font-bold">${user.points || 0}</span>
               </div>
               
               <!-- Coins Display -->
               <div className="flex items-center space-x-2 bg-[#2A2A3C] px-3 py-2 rounded-lg">
                 <span className="text-yellow-600">🪙</span>
-                <span className="font-mono font-bold">${userStats.coins}</span>
+                <span className="font-mono font-bold">${user.coins || 0}</span>
               </div>
               
               <!-- User Profile Dropdown -->
@@ -98,8 +78,19 @@ export default function Navbar() {
                 onMouseLeave=${handleMouseLeave}
               >
                 <div className="flex items-center space-x-2 bg-[#2A2A3C] px-4 py-2 rounded-lg cursor-pointer hover:bg-[#353548] transition-colors">
-                  <span className="text-2xl">👤</span>
-                  <span className="font-bold">${username}</span>
+                  ${(() => {
+        const pfp = user.profile_picture;
+        if (pfp && pfp.startsWith("helmet_")) {
+          const color = pfp.split("_")[1].split(".")[0];
+          const colorMap = { red: "bg-red-600", blue: "bg-blue-600", yellow: "bg-yellow-500", green: "bg-green-600" };
+          return html`<div className="w-8 h-8 rounded-full ${colorMap[color]} flex items-center justify-center text-sm mr-2">🏎️</div>`;
+        } else if (pfp) {
+          return html`<img src="/uploads/${pfp}" className="w-8 h-8 rounded-full object-cover mr-2" />`;
+        } else {
+          return html`<span className="text-2xl mr-2">👤</span>`;
+        }
+      })()}
+                  <span className="font-bold">${user.username}</span>
                   <span 
                     className="text-xs"
                     style=${{
